@@ -31,6 +31,7 @@
         #albums-grid .album-title {
             overflow: hidden;
             text-overflow: ellipsis;
+            text-align: center;
             white-space: nowrap;
         }
 
@@ -149,7 +150,11 @@
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3">
                     <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
                 </span>
-                <input type="text" placeholder="Search albums by title, artist..." class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
+                <input id="search-input" type="text" placeholder="Search albums by title, artist..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
+                <button id="clear-search-button" class="absolute inset-y-0 right-0 flex items-center pr-3 hidden">
+                    <svg class="h-5 w-5 text-gray-400 hover:text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                </button>
+                <div id="suggestions-box" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hidden"></div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 mb-8">
                 <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Genre</option><option>Rock</option><option>Pop</option><option>Jazz</option></select>
@@ -167,6 +172,7 @@
                     <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Cosmic Echoes</h3></div>
                 </div>
@@ -175,6 +181,7 @@
                     <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Midnight Drive</h3></div>
                 </div>
@@ -183,6 +190,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">City Lights</h3></div>
                 </div>
@@ -191,6 +199,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Ocean Deep</h3></div>
                 </div>
@@ -199,6 +208,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Solar Flare</h3></div>
                 </div>
@@ -207,6 +217,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Neon Dreams</h3></div>
                 </div>
@@ -215,6 +226,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Cosmic Echoes</h3></div>
                 </div>
@@ -223,6 +235,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Midnight Drive</h3></div>
                 </div>
@@ -231,6 +244,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">City Lights</h3></div>
                 </div>
@@ -239,6 +253,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Ocean Deep</h3></div>
                 </div>
@@ -247,6 +262,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Solar Flare</h3></div>
                 </div>
@@ -255,6 +271,7 @@
                      <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Neon Dreams</h3></div>
                 </div>
@@ -272,16 +289,19 @@
                             <div class="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer hover:opacity-75">
                                 <div class="skeleton-loader absolute inset-0"></div>
                                 <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                                <div class="absolute inset-0"></div>
                             </div>
                              <!-- Gallery Image 2 -->
                             <div class="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer hover:opacity-75">
                                 <div class="skeleton-loader absolute inset-0"></div>
                                 <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                                <div class="absolute inset-0"></div>
                             </div>
                              <!-- Gallery Image 3 -->
                             <div class="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer hover:opacity-75">
                                 <div class="skeleton-loader absolute inset-0"></div>
                                 <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                                <div class="absolute inset-0"></div>
                             </div>
                         </div>
                     </div>
@@ -307,6 +327,75 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Caching Album Data ---
+            const albumCache = [];
+            document.querySelectorAll('.album-card').forEach(card => {
+                albumCache.push({
+                    title: card.querySelector('.album-title').textContent.toLowerCase(),
+                    element: card
+                });
+            });
+
+            // --- Search Logic ---
+            const searchInput = document.getElementById('search-input');
+            const clearSearchButton = document.getElementById('clear-search-button');
+            const suggestionsBox = document.getElementById('suggestions-box');
+
+            const filterAlbums = (query) => {
+                query = query.toLowerCase();
+                albumCache.forEach(album => {
+                    const isVisible = album.title.includes(query);
+                    album.element.style.display = isVisible ? '' : 'none';
+                });
+            };
+
+            const showSuggestions = (query) => {
+                if (!query) {
+                    suggestionsBox.classList.add('hidden');
+                    return;
+                }
+                const matchedAlbums = albumCache
+                    .filter(album => album.title.includes(query.toLowerCase()))
+                    .map(album => album.title);
+
+                if (matchedAlbums.length > 0) {
+                    suggestionsBox.innerHTML = matchedAlbums
+                        .map(title => `<div class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">${title}</div>`)
+                        .join('');
+                    suggestionsBox.classList.remove('hidden');
+                } else {
+                    suggestionsBox.classList.add('hidden');
+                }
+            };
+
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value;
+                filterAlbums(query);
+                showSuggestions(query);
+                clearSearchButton.classList.toggle('hidden', !query);
+            });
+
+            clearSearchButton.addEventListener('click', () => {
+                searchInput.value = '';
+                filterAlbums('');
+                suggestionsBox.classList.add('hidden');
+                clearSearchButton.classList.add('hidden');
+            });
+
+            suggestionsBox.addEventListener('click', (e) => {
+                if (e.target.tagName === 'DIV') {
+                    searchInput.value = e.target.textContent;
+                    filterAlbums(e.target.textContent);
+                    suggestionsBox.classList.add('hidden');
+                }
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.relative')) {
+                    suggestionsBox.classList.add('hidden');
+                }
+            });
+
             // --- Lazy Loading Logic with Intersection Observer ---
             const lazyImages = document.querySelectorAll('.lazy-image');
 
@@ -318,11 +407,8 @@
                             img.src = img.dataset.src;
                             img.onload = () => {
                                 img.classList.add('loaded');
-                                // Once loaded, the skeleton behind it is covered, 
-                                // and we don't strictly need to remove it, but it's good practice.
                                 const skeleton = img.previousElementSibling;
                                 if(skeleton && skeleton.classList.contains('skeleton-loader')) {
-                                    // Wait for fade transition to complete before removing
                                     setTimeout(() => {
                                         skeleton.remove();
                                     }, 400);
@@ -332,8 +418,8 @@
                         }
                     });
                 }, {
-                    root: document.getElementById('albums-grid'), // Use grid as viewport boundary
-                    rootMargin: '100px 0px', // Start loading before it comes into view
+                    root: document.getElementById('albums-grid'),
+                    rootMargin: '100px 0px',
                     threshold: 0.01
                 });
 
@@ -341,7 +427,6 @@
                     imageObserver.observe(img);
                 });
             } else {
-                // Fallback for browsers without IntersectionObserver
                 lazyImages.forEach(img => {
                     img.src = img.dataset.src;
                     img.classList.add('loaded');
