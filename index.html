@@ -102,43 +102,7 @@
         <div class="relative flex-grow min-h-0">
             <!-- Albums Grid -->
             <div id="albums-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 h-full overflow-y-auto p-2">
-                <!-- Album Card 1: 3 Images -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none"
-                    data-title="Cosmic Echoes"
-                    data-description="A journey through swirling nebulae and distant galaxies, captured in sound. This album blends ambient synths with orchestral arrangements to create a truly otherworldly experience."
-                    data-images='["https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/00bee383-844c-426c-858f-e1f98a33c9f9/original=true,quality=90,optimized=true/00012-322562131.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/659f8e77-52fa-4b8c-892f-235905c3327f/original=true,quality=90,optimized=true/00008-2390625982.jpeg"]'>
-                    <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Cosmic Echoes</h3></div>
-                </div>
-                <!-- Album Card 2: 1 Image -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none"
-                    data-title="Midnight Drive"
-                    data-description="The perfect soundtrack for a late-night drive through city streets. Featuring smooth jazz, lo-fi beats, and a touch of soul."
-                    data-images='["https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/54f07a4a-057d-49d7-9f6e-7b789a78a6e8/original=true,quality=90,optimized=true/00001-138887754.jpeg"]'>
-                    <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/54f07a4a-057d-49d7-9f6e-7b789a78a6e8/original=true,quality=90,optimized=true/00001-138887754.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Midnight Drive</h3></div>
-                </div>
-                <!-- Album Card 3: 4 Images -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none"
-                    data-title="City Lights"
-                    data-description="An energetic and vibrant collection of pop anthems inspired by the never-ending pulse of the metropolis."
-                    data-images='["https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/526a0f18-f04c-41e7-a026-7848c7075e39/original=true,quality=90,optimized=true/00002-289550292.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/d89a7281-032f-45a4-9407-1e58a4f227b2/original=true,quality=90,optimized=true/00003-289550293.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/813454a8-55a9-4d0f-897b-a252f44ee810/original=true,quality=90,optimized=true/00004-289550294.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/237403a1-29a3-460d-835a-93512351a804/original=true,quality=90,optimized=true/00005-289550295.jpeg"]'>
-                    <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/526a0f18-f04c-41e7-a026-7848c7075e39/original=true,quality=90,optimized=true/00002-289550292.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">City Lights</h3></div>
-                </div>
-                <!-- Add more album cards as needed -->
+                <!-- Album cards will be dynamically inserted here -->
             </div>
 
             <!-- Backdrop for Detail View -->
@@ -153,7 +117,7 @@
                     </div>
                     
                     <!-- Album Info (Read-Only) -->
-                    <div class="flex flex-col">
+                    <div class="flex flex-col overflow-hidden">
                         <div class="flex justify-between items-start mb-4">
                              <div>
                                 <h3 id="detail-title" class="text-2xl font-bold"></h3>
@@ -171,15 +135,151 @@
     </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // --- API Credentials ---
+            const API_KEY = "681de6c372702c663ab3d4e9"; // <-- IMPORTANT: Replace with your actual API key
+            const DB_URL = "https://batchimagecomparer-1d67.restdb.io/rest/albums"; // <-- IMPORTANT: Replace with your actual database URL
+
             // --- Caching Album Data ---
-            const albumCache = [];
-            document.querySelectorAll('.album-card').forEach(card => {
-                albumCache.push({
-                    title: card.querySelector('.album-title').textContent.toLowerCase(),
-                    element: card
+            let albumCache = [];
+            const albumsGrid = document.getElementById('albums-grid');
+
+            /**
+             * A generic function to make calls to the REST API.
+             */
+            async function apiCall(userApiKey, userDbUrl, endpoint = '', method = 'GET', body = null) {
+                if (!userApiKey || !userDbUrl) {
+                    throw new Error('API Key or DB URL not provided.');
+                }
+                const base = userDbUrl.endsWith('/') ? userDbUrl.slice(0, -1) : userDbUrl;
+                const fullUrl = endpoint ? (base + (endpoint.startsWith('/') ? endpoint : '/' + endpoint)) : base;
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-apikey': userApiKey,
+                        'cache-control': 'no-cache'
+                    }
+                };
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                try {
+                    const response = await fetch(fullUrl, options);
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                        throw new Error(`API Error: ${response.status} - ${errorData.message || 'Unknown error'}`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    console.error('API Call Failed:', error);
+                    throw error;
+                }
+            }
+
+            /**
+             * Creates an HTML element for a single album.
+             */
+            function createAlbumCard(album) {
+                const card = document.createElement('div');
+                card.className = 'album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none';
+                
+                card.dataset.title = album.title;
+                card.dataset.description = album.description || 'No description available.';
+                card.dataset.images = JSON.stringify(album.imageUrls);
+
+                const imageUrl = album.imageUrls && album.imageUrls.length > 0 ? album.imageUrls[0] : '';
+
+                card.innerHTML = `
+                    <div class="relative overflow-hidden">
+                        <div class="skeleton-loader absolute inset-0"></div>
+                        <img data-src="${imageUrl}" class="lazy-image image">
+                        <div class="absolute inset-0"></div>
+                    </div>
+                    <div class="p-3"><h3 class="album-title text-lg font-semibold">${album.title}</h3></div>
+                `;
+                return card;
+            }
+
+            /**
+             * Fetches albums from the API and populates the grid.
+             */
+            async function fetchAndDisplayAlbums() {
+                try {
+                    const albums = await apiCall(API_KEY, DB_URL);
+                    albumsGrid.innerHTML = ''; 
+                    
+                    albums.forEach(album => {
+                        const card = createAlbumCard(album);
+                        albumsGrid.appendChild(card);
+                    });
+
+                    initializeAlbumCardLogic();
+
+                } catch (error) {
+                    albumsGrid.innerHTML = `<p class="text-red-500 col-span-full text-center">Failed to load albums. Please check your API credentials and network connection.</p>`;
+                }
+            }
+
+            /**
+             * Initializes all interactive logic for album cards.
+             * MODIFICATION: The order of operations has been changed to fix the lazy loader.
+             */
+            function initializeAlbumCardLogic() {
+                // --- 1. (Re)initialize Expandable Detail View Logic ---
+                // This replaces cards with clones to clear old event listeners.
+                // This MUST be done before attaching new observers or building the cache.
+                document.querySelectorAll('.album-card').forEach(card => {
+                    card.replaceWith(card.cloneNode(true));
                 });
-            });
+
+                // Now, add new click event listeners to the NEW cloned nodes.
+                document.querySelectorAll('.album-card').forEach(card => {
+                    card.addEventListener('click', () => handleCardClick(card));
+                });
+
+                // --- 2. (Re)build the cache for search functionality ---
+                // Do this after cloning so the 'element' reference points to the correct, final node.
+                albumCache = [];
+                document.querySelectorAll('.album-card').forEach(card => {
+                    albumCache.push({
+                        title: card.querySelector('.album-title').textContent.toLowerCase(),
+                        element: card
+                    });
+                });
+
+                // --- 3. (Re)initialize Lazy Loading for the NEW images ---
+                // The observer will now correctly target the images inside the cloned cards.
+                const lazyImages = document.querySelectorAll('#albums-grid .lazy-image');
+                if ('IntersectionObserver' in window) {
+                    const imageObserver = new IntersectionObserver((entries, observer) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const img = entry.target;
+                                
+                                img.onload = () => {
+                                    img.classList.add('loaded');
+                                    const skeleton = img.previousElementSibling;
+                                    if (skeleton && skeleton.classList.contains('skeleton-loader')) {
+                                        setTimeout(() => skeleton.remove(), 400);
+                                    }
+                                };
+                                
+                                img.src = img.dataset.src;
+                                observer.unobserve(img);
+                            }
+                        });
+                    }, { root: albumsGrid, rootMargin: '100px 0px', threshold: 0.01 });
+                    lazyImages.forEach(img => imageObserver.observe(img));
+                } else {
+                    // Fallback for older browsers
+                    lazyImages.forEach(img => {
+                        img.src = img.dataset.src;
+                        img.classList.add('loaded');
+                    });
+                }
+            }
+
 
             // --- Search Logic ---
             const searchInput = document.getElementById('search-input');
@@ -241,34 +341,7 @@
                 }
             });
 
-            // --- Main Grid Lazy Loading Logic ---
-            const lazyImages = document.querySelectorAll('#albums-grid .lazy-image');
-            if ('IntersectionObserver' in window) {
-                const imageObserver = new IntersectionObserver((entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            img.src = img.dataset.src;
-                            img.onload = () => {
-                                img.classList.add('loaded');
-                                const skeleton = img.previousElementSibling;
-                                if (skeleton && skeleton.classList.contains('skeleton-loader')) {
-                                    setTimeout(() => skeleton.remove(), 400);
-                                }
-                            };
-                            observer.unobserve(img);
-                        }
-                    });
-                }, { root: document.getElementById('albums-grid'), rootMargin: '100px 0px', threshold: 0.01 });
-                lazyImages.forEach(img => imageObserver.observe(img));
-            } else { /* Fallback for older browsers */
-                lazyImages.forEach(img => {
-                    img.src = img.dataset.src;
-                    img.classList.add('loaded');
-                });
-            }
-
-            // --- NEW: Dedicated Lazy Loader for Detail View Images ---
+            // --- Dedicated Lazy Loader for Detail View Images ---
             const lazyLoadDetailImages = () => {
                 const detailImages = document.querySelectorAll('#detail-image-gallery .lazy-image');
                 detailImages.forEach(img => {
@@ -308,8 +381,7 @@
                 if (e.target === menuOverlay) closeMenu();
             });
 
-            // --- Expandable Album Detail Logic (MODIFIED) ---
-            const albumCards = document.querySelectorAll('.album-card');
+            // --- Expandable Album Detail Logic ---
             const detailContainer = document.getElementById('album-detail-container');
             const detailBackdrop = document.getElementById('detail-backdrop');
             const closeDetailButton = document.getElementById('close-detail-view');
@@ -324,66 +396,63 @@
                 currentlyOpenCard = null;
             };
 
-            albumCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    if (currentlyOpenCard === card) {
-                        closeDetailView();
-                        return;
-                    }
-                    if (currentlyOpenCard) {
-                        closeDetailView();
-                    }
-                    
-                    currentlyOpenCard = card;
-                    card.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2', 'dark:ring-offset-gray-900');
+            function handleCardClick(card) {
+                if (currentlyOpenCard === card) {
+                    closeDetailView();
+                    return;
+                }
+                if (currentlyOpenCard) {
+                    closeDetailView();
+                }
+                
+                currentlyOpenCard = card;
+                card.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2', 'dark:ring-offset-gray-900');
 
-                    // --- Populate Detail View from data-* attributes ---
-                    const title = card.dataset.title;
-                    const description = card.dataset.description;
-                    const images = JSON.parse(card.dataset.images || '[]');
+                const title = card.dataset.title;
+                const description = card.dataset.description;
+                const images = JSON.parse(card.dataset.images || '[]');
 
-                    document.getElementById('detail-title').textContent = title;
-                    document.getElementById('detail-description').textContent = description;
-                    document.getElementById('detail-image-count').textContent = `${images.length} Image${images.length !== 1 ? 's' : ''}`;
+                document.getElementById('detail-title').textContent = title;
+                document.getElementById('detail-description').textContent = description;
+                document.getElementById('detail-image-count').textContent = `${images.length} Image${images.length !== 1 ? 's' : ''}`;
 
-                    const gallery = document.getElementById('detail-image-gallery');
-                    gallery.innerHTML = ''; // Clear previous content
+                const gallery = document.getElementById('detail-image-gallery');
+                gallery.innerHTML = ''; 
 
-                    // Create and append actual image elements
-                    images.forEach(src => {
-                        const imageWrapper = document.createElement('div');
-                        imageWrapper.className = 'relative w-full overflow-hidden rounded-lg';
-                        
-                        imageWrapper.innerHTML = `
-                            <div class="skeleton-loader absolute inset-0"></div>
-                            <img data-src="${src}" class="lazy-image w-full h-full object-cover">
-                            <div class="absolute inset-0"></div>
-                        `;
-                        gallery.appendChild(imageWrapper);
-                    });
-
-                    // --- NEW: Create and append placeholder elements ---
-                    const maxGridItems = 4; // The detail gallery has 4 columns
-                    if (images.length < maxGridItems) {
-                        const placeholdersNeeded = maxGridItems - images.length;
-                        for (let i = 0; i < placeholdersNeeded; i++) {
-                            const placeholderWrapper = document.createElement('div');
-                            placeholderWrapper.className = 'relative w-full overflow-hidden rounded-lg';
-                            placeholderWrapper.innerHTML = `<div class="placeholder-image"></div>`;
-                            gallery.appendChild(placeholderWrapper);
-                        }
-                    }
-
-                    // Call the dedicated lazy loader for the new images
-                    lazyLoadDetailImages();
-
-                    detailContainer.classList.add('expanded');
-                    detailBackdrop.classList.add('expanded');
+                const imagesToShow = images.slice(0, 4);
+                imagesToShow.forEach(src => {
+                    const imageWrapper = document.createElement('div');
+                    imageWrapper.className = 'relative w-full overflow-hidden rounded-lg';
+                    imageWrapper.innerHTML = `
+                        <div class="skeleton-loader absolute inset-0"></div>
+                        <img data-src="${src}" class="lazy-image w-full h-full object-cover">
+                        <div class="absolute inset-0 z-10"></div>
+                    `;
+                    gallery.appendChild(imageWrapper);
                 });
-            });
+
+                const maxGridItems = 4;
+                if (imagesToShow.length < maxGridItems) {
+                    const placeholdersNeeded = maxGridItems - imagesToShow.length;
+                    for (let i = 0; i < placeholdersNeeded; i++) {
+                        const placeholderWrapper = document.createElement('div');
+                        placeholderWrapper.className = 'relative w-full overflow-hidden rounded-lg';
+                        placeholderWrapper.innerHTML = `<div class="placeholder-image"></div>`;
+                        gallery.appendChild(placeholderWrapper);
+                    }
+                }
+
+                lazyLoadDetailImages();
+
+                detailContainer.classList.add('expanded');
+                detailBackdrop.classList.add('expanded');
+            }
 
             closeDetailButton.addEventListener('click', closeDetailView);
             detailBackdrop.addEventListener('click', closeDetailView);
+
+            // --- Initial Load ---
+            await fetchAndDisplayAlbums();
         });
     </script>
 </body>
