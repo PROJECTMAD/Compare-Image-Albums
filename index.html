@@ -56,8 +56,11 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 h-screen overflow-hidden">
 
+    <!-- Backdrop for Detail View -->
+    <div id="detail-backdrop" class="absolute inset-0 bg-gray-900/70 backdrop-blur-sm z-20"></div>
+
     <!-- Floating Menu Button -->
-    <button id="menu-button" class="fixed bottom-6 right-6 bg-indigo-600 hover:bg-indigo-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center z-40 transition-transform hover:scale-110">
+    <button id="menu-button" class="fixed bottom-6 right-6 bg-indigo-600 hover:bg-indigo-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center z-10 transition-transform hover:scale-110">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
     </button>
 
@@ -104,9 +107,6 @@
             <div id="albums-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 h-full overflow-y-auto p-2">
                 <!-- Album cards will be dynamically inserted here -->
             </div>
-
-            <!-- Backdrop for Detail View -->
-            <div id="detail-backdrop" class="absolute inset-0 bg-gray-900/70 backdrop-blur-sm z-20"></div>
 
             <!-- MODIFIED Album Detail Container -->
             <div id="album-detail-container" class="absolute bottom-0 left-0 right-0 p-4 z-30">
@@ -450,6 +450,7 @@
 
             closeDetailButton.addEventListener('click', closeDetailView);
             detailBackdrop.addEventListener('click', closeDetailView);
+            menuButton.addEventListener('click', closeDetailView);
 
             // --- Initial Load ---
             await fetchAndDisplayAlbums();
