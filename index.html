@@ -3,115 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Music Albums v4</title>
+    <title>Modern Music Albums v5</title>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <style>
         /* Custom scrollbar for a cleaner look */
-        #albums-grid::-webkit-scrollbar {
-            width: 8px;
-        }
-        #albums-grid::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        #albums-grid::-webkit-scrollbar-thumb {
-            background: #4f46e5; /* Indigo */
-            border-radius: 4px;
-        }
-        #albums-grid::-webkit-scrollbar-thumb:hover {
-            background: #4338ca;
-        }
+        #albums-grid::-webkit-scrollbar { width: 8px; }
+        #albums-grid::-webkit-scrollbar-track { background: transparent; }
+        #albums-grid::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        #albums-grid::-webkit-scrollbar-thumb:hover { background: #4338ca; }
 
         /* Album Cards */
-        #albums-grid .album-card {
-            width: 270px;
-            height: calc(270px * 1.7);
-            aspect-ratio: 1.7;
-        }
+        #albums-grid .album-card { width: 270px; height: calc(270px * 1.7); aspect-ratio: 1.7; }
+        #albums-grid .album-title { overflow: hidden; text-overflow: ellipsis; text-align: center; white-space: nowrap; }
 
-        #albums-grid .album-title {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        .image {
-            flex: 1;
-            height: 100%;
-            min-width: 100%;
-            object-fit: cover;
-            object-position: top;
-            aspect-ratio: 1.46;
-            transition: transform 400ms ease;
-
-            .top {
-                object-position: top center;
-            }
-        }
+        .image { flex: 1; height: 405px; width: 270px; object-fit: cover; object-position: top; aspect-ratio: 1.46; transition: transform 400ms ease; }
+        .image.top { object-position: top center; }
 
         /* Animation for the detail panel and backdrop */
-        #album-detail-container, #detail-backdrop {
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
-            pointer-events: none;
-        }
-        #album-detail-container.expanded, #detail-backdrop.expanded {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        #album-detail-container {
-             transform: translateY(20px);
-             transition-property: opacity, transform;
-             transition-duration: 0.3s;
-        }
-        #album-detail-container.expanded {
-            transform: translateY(0);
-        }
+        #album-detail-container, #detail-backdrop { opacity: 0; transition: opacity 0.3s ease-out; pointer-events: none; }
+        #album-detail-container.expanded, #detail-backdrop.expanded { opacity: 1; pointer-events: auto; }
+        #album-detail-container { transform: translateY(20px); transition-property: opacity, transform; transition-duration: 0.3s; }
+        #album-detail-container.expanded { transform: translateY(0); }
 
-        /* --- ADDED: Skeleton Loading Animation --- */
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-        .skeleton-loader {
-            overflow: hidden;
-            background-color: #4f5570;
-        }
-        .dark .skeleton-loader {
-            background-color: #374151;
-        }
-        .skeleton-loader::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            /* Smooth gradient shimmer effect */
-            background: linear-gradient(
-                90deg,
-                rgba(255, 255, 255, 0) 0%,
-                rgba(255, 255, 255, 0.2) 50%,
-                rgba(255, 255, 255, 0) 100%
-            );
-            animation: shimmer 1.5s infinite;
-        }
-        .dark .skeleton-loader::after {
-            background: linear-gradient(
-                90deg,
-                rgba(255, 255, 255, 0) 0%,
-                rgba(255, 255, 255, 0.05) 50%,
-                rgba(255, 255, 255, 0) 100%
-            );
-        }
+        /* Skeleton Loading Animation */
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .skeleton-loader { overflow: hidden; background-color: #4f5570; }
+        .dark .skeleton-loader { background-color: #374151; }
+        .skeleton-loader::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%); animation: shimmer 1.5s infinite; }
+        .dark .skeleton-loader::after { background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%); }
 
         /* Ensures the image fades in smoothly */
-        .lazy-image image {
-            opacity: 0;
-            transition: opacity 0.4s ease-in-out;
+        .lazy-image { opacity: 0; transition: opacity 0.4s ease-in-out; }
+        .lazy-image.loaded { opacity: 1; }
+
+        /* --- NEW: Placeholder styles for empty image slots --- */
+        .placeholder-image {
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            border: 1px solid #4b5563;
         }
-        .lazy-image image.loaded {
-            opacity: 1;
+        .placeholder-image::after {
+            content: "?";
+            opacity: 0.5;
+            font-size: 2rem;
+            font-weight: lighter;
         }
     </style>
 </head>
@@ -143,32 +82,31 @@
     </div>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 h-full flex flex-col">
-        <!-- Search and Filters (does not grow) -->
+        <!-- Search and Filters -->
         <div class="flex-shrink-0">
             <h1 class="text-4xl font-bold mb-4 text-center">Your Album Collection</h1>
             <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
-                </span>
-                <input id="search-input" type="text" placeholder="Search albums by title, artist..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
-                <button id="clear-search-button" class="absolute inset-y-0 right-0 flex items-center pr-3 hidden">
-                    <svg class="h-5 w-5 text-gray-400 hover:text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
-                </button>
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3"><svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg></span>
+                <input id="search-input" type="text" placeholder="Search albums by title..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
+                <button id="clear-search-button" class="absolute inset-y-0 right-0 flex items-center pr-3 hidden"><svg class="h-5 w-5 text-gray-400 hover:text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg></button>
                 <div id="suggestions-box" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hidden"></div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 mb-8">
-                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Genre</option><option>Rock</option><option>Pop</option><option>Jazz</option></select>
-                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Artist</option><option>Artist 1</option><option>Artist 2</option></select>
-                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Year</option><option>2025</option><option>2024</option></select>
-                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Rating</option><option>★★★★★</option><option>★★★★☆+</option></select>
+                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Genre</option></select>
+                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Artist</option></select>
+                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Year</option></select>
+                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Rating</option></select>
             </div>
         </div>
 
         <div class="relative flex-grow min-h-0">
-            <!-- Albums Grid with Lazy Loading Images -->
+            <!-- Albums Grid -->
             <div id="albums-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 h-full overflow-y-auto p-2">
-                 <!-- Album Card 1 -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
+                <!-- Album Card 1: 3 Images -->
+                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none"
+                    data-title="Cosmic Echoes"
+                    data-description="A journey through swirling nebulae and distant galaxies, captured in sound. This album blends ambient synths with orchestral arrangements to create a truly otherworldly experience."
+                    data-images='["https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/00bee383-844c-426c-858f-e1f98a33c9f9/original=true,quality=90,optimized=true/00012-322562131.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/659f8e77-52fa-4b8c-892f-235905c3327f/original=true,quality=90,optimized=true/00008-2390625982.jpeg"]'>
                     <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
@@ -176,149 +114,56 @@
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Cosmic Echoes</h3></div>
                 </div>
-                <!-- Album Card 2 -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
+                <!-- Album Card 2: 1 Image -->
+                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none"
+                    data-title="Midnight Drive"
+                    data-description="The perfect soundtrack for a late-night drive through city streets. Featuring smooth jazz, lo-fi beats, and a touch of soul."
+                    data-images='["https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/54f07a4a-057d-49d7-9f6e-7b789a78a6e8/original=true,quality=90,optimized=true/00001-138887754.jpeg"]'>
                     <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/54f07a4a-057d-49d7-9f6e-7b789a78a6e8/original=true,quality=90,optimized=true/00001-138887754.jpeg" class="lazy-image image">
                         <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">Midnight Drive</h3></div>
                 </div>
-                <!-- Album Card 3 -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
+                <!-- Album Card 3: 4 Images -->
+                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none"
+                    data-title="City Lights"
+                    data-description="An energetic and vibrant collection of pop anthems inspired by the never-ending pulse of the metropolis."
+                    data-images='["https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/526a0f18-f04c-41e7-a026-7848c7075e39/original=true,quality=90,optimized=true/00002-289550292.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/d89a7281-032f-45a4-9407-1e58a4f227b2/original=true,quality=90,optimized=true/00003-289550293.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/813454a8-55a9-4d0f-897b-a252f44ee810/original=true,quality=90,optimized=true/00004-289550294.jpeg", "https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/237403a1-29a3-460d-835a-93512351a804/original=true,quality=90,optimized=true/00005-289550295.jpeg"]'>
+                    <div class="relative overflow-hidden">
                         <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
+                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/526a0f18-f04c-41e7-a026-7848c7075e39/original=true,quality=90,optimized=true/00002-289550292.jpeg" class="lazy-image image">
                         <div class="absolute inset-0"></div>
                     </div>
                     <div class="p-3"><h3 class="album-title text-lg font-semibold">City Lights</h3></div>
                 </div>
-                <!-- Album Card 4 -->
-                 <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Ocean Deep</h3></div>
-                </div>
-                <!-- Album Card 5 -->
-                 <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Solar Flare</h3></div>
-                </div>
-                <!-- Album Card 6 -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Neon Dreams</h3></div>
-                </div>
-                <!-- Album Card 7 -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Cosmic Echoes</h3></div>
-                </div>
-                <!-- Album Card 8 -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Midnight Drive</h3></div>
-                </div>
-                <!-- Album Card 9 -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">City Lights</h3></div>
-                </div>
-                <!-- Album Card 10 -->
-                 <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Ocean Deep</h3></div>
-                </div>
-                <!-- Album Card 11 -->
-                 <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Solar Flare</h3></div>
-                </div>
-                <!-- Album Card 12 -->
-                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none">
-                     <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">Neon Dreams</h3></div>
-                </div>
+                <!-- Add more album cards as needed -->
             </div>
 
+            <!-- Backdrop for Detail View -->
             <div id="detail-backdrop" class="absolute inset-0 bg-gray-900/70 backdrop-blur-sm z-20"></div>
 
+            <!-- MODIFIED Album Detail Container -->
             <div id="album-detail-container" class="absolute bottom-0 left-0 right-0 p-4 z-30">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Image Gallery with Skeleton Loader -->
-                    <div class="md:col-span-1">
-                        <h4 class="font-bold text-xl mb-4">Image Gallery</h4>
-                        <div class="grid grid-cols-3 gap-2">
-                             <!-- Gallery Image 1 -->
-                            <div class="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer hover:opacity-75">
-                                <div class="skeleton-loader absolute inset-0"></div>
-                                <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                                <div class="absolute inset-0"></div>
-                            </div>
-                             <!-- Gallery Image 2 -->
-                            <div class="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer hover:opacity-75">
-                                <div class="skeleton-loader absolute inset-0"></div>
-                                <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                                <div class="absolute inset-0"></div>
-                            </div>
-                             <!-- Gallery Image 3 -->
-                            <div class="relative aspect-square w-full overflow-hidden rounded-lg cursor-pointer hover:opacity-75">
-                                <div class="skeleton-loader absolute inset-0"></div>
-                                <img data-src="https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/94583175-b06b-4cfa-af12-74a21d071860/original=true,quality=90,optimized=true/19c6a594-6f56-4a1f-a8da-eae7de06c8ef-0.jpeg" class="lazy-image image">
-                                <div class="absolute inset-0"></div>
-                            </div>
-                        </div>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6 h-[20vh]">
+                    <!-- Image Gallery -->
+                    <div id="detail-image-gallery" class="grid grid-cols-4 gap-4 overflow-y-auto">
+                        <!-- Images and placeholders will be dynamically inserted here -->
                     </div>
-                    <!-- Album Info & Notes -->
-                    <div class="md:col-span-2">
-                        <div class="flex justify-between items-start">
+                    
+                    <!-- Album Info (Read-Only) -->
+                    <div class="flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
                              <div>
-                                <h3 id="detail-title" class="text-2xl font-bold">Album Title</h3>
-                                <p id="detail-artist" class="text-md text-gray-500 dark:text-gray-400">Artist Name</p>
+                                <h3 id="detail-title" class="text-2xl font-bold"></h3>
+                                <p id="detail-image-count" class="text-sm text-gray-500 dark:text-gray-400 font-medium"></p>
                             </div>
                             <button id="close-detail-view" class="text-2xl font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 leading-none">&times;</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
-                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg"><strong>Release Year:</strong> <span id="detail-year">2025</span></div>
-                            <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg"><strong>Genre:</strong> <span id="detail-genre">Placeholder</span></div>
+                        <div id="detail-description" class="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg overflow-y-auto flex-grow">
+                            <!-- Description will be inserted here -->
                         </div>
-                        <textarea id="detail-notes" class="w-full mt-4 p-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg resize-y dark:bg-gray-900 h-24 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Add your personal notes about this album..."></textarea>
                     </div>
                 </div>
             </div>
@@ -396,9 +241,8 @@
                 }
             });
 
-            // --- Lazy Loading Logic with Intersection Observer ---
-            const lazyImages = document.querySelectorAll('.lazy-image');
-
+            // --- Main Grid Lazy Loading Logic ---
+            const lazyImages = document.querySelectorAll('#albums-grid .lazy-image');
             if ('IntersectionObserver' in window) {
                 const imageObserver = new IntersectionObserver((entries, observer) => {
                     entries.forEach(entry => {
@@ -408,30 +252,36 @@
                             img.onload = () => {
                                 img.classList.add('loaded');
                                 const skeleton = img.previousElementSibling;
-                                if(skeleton && skeleton.classList.contains('skeleton-loader')) {
-                                    setTimeout(() => {
-                                        skeleton.remove();
-                                    }, 400);
+                                if (skeleton && skeleton.classList.contains('skeleton-loader')) {
+                                    setTimeout(() => skeleton.remove(), 400);
                                 }
                             };
                             observer.unobserve(img);
                         }
                     });
-                }, {
-                    root: document.getElementById('albums-grid'),
-                    rootMargin: '100px 0px',
-                    threshold: 0.01
-                });
-
-                lazyImages.forEach(img => {
-                    imageObserver.observe(img);
-                });
-            } else {
+                }, { root: document.getElementById('albums-grid'), rootMargin: '100px 0px', threshold: 0.01 });
+                lazyImages.forEach(img => imageObserver.observe(img));
+            } else { /* Fallback for older browsers */
                 lazyImages.forEach(img => {
                     img.src = img.dataset.src;
                     img.classList.add('loaded');
                 });
             }
+
+            // --- NEW: Dedicated Lazy Loader for Detail View Images ---
+            const lazyLoadDetailImages = () => {
+                const detailImages = document.querySelectorAll('#detail-image-gallery .lazy-image');
+                detailImages.forEach(img => {
+                    img.src = img.dataset.src;
+                    img.onload = () => {
+                        img.classList.add('loaded');
+                        const skeleton = img.previousElementSibling;
+                        if (skeleton && skeleton.classList.contains('skeleton-loader')) {
+                            setTimeout(() => skeleton.remove(), 400);
+                        }
+                    };
+                });
+            };
 
             // --- Popup Menu Logic ---
             const menuButton = document.getElementById('menu-button');
@@ -458,7 +308,7 @@
                 if (e.target === menuOverlay) closeMenu();
             });
 
-            // --- Expandable Album Detail Logic ---
+            // --- Expandable Album Detail Logic (MODIFIED) ---
             const albumCards = document.querySelectorAll('.album-card');
             const detailContainer = document.getElementById('album-detail-container');
             const detailBackdrop = document.getElementById('detail-backdrop');
@@ -487,8 +337,45 @@
                     currentlyOpenCard = card;
                     card.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2', 'dark:ring-offset-gray-900');
 
-                    const title = card.querySelector('h3').textContent;
+                    // --- Populate Detail View from data-* attributes ---
+                    const title = card.dataset.title;
+                    const description = card.dataset.description;
+                    const images = JSON.parse(card.dataset.images || '[]');
+
                     document.getElementById('detail-title').textContent = title;
+                    document.getElementById('detail-description').textContent = description;
+                    document.getElementById('detail-image-count').textContent = `${images.length} Image${images.length !== 1 ? 's' : ''}`;
+
+                    const gallery = document.getElementById('detail-image-gallery');
+                    gallery.innerHTML = ''; // Clear previous content
+
+                    // Create and append actual image elements
+                    images.forEach(src => {
+                        const imageWrapper = document.createElement('div');
+                        imageWrapper.className = 'relative w-full overflow-hidden rounded-lg';
+                        
+                        imageWrapper.innerHTML = `
+                            <div class="skeleton-loader absolute inset-0"></div>
+                            <img data-src="${src}" class="lazy-image w-full h-full object-cover">
+                            <div class="absolute inset-0"></div>
+                        `;
+                        gallery.appendChild(imageWrapper);
+                    });
+
+                    // --- NEW: Create and append placeholder elements ---
+                    const maxGridItems = 4; // The detail gallery has 4 columns
+                    if (images.length < maxGridItems) {
+                        const placeholdersNeeded = maxGridItems - images.length;
+                        for (let i = 0; i < placeholdersNeeded; i++) {
+                            const placeholderWrapper = document.createElement('div');
+                            placeholderWrapper.className = 'relative w-full overflow-hidden rounded-lg';
+                            placeholderWrapper.innerHTML = `<div class="placeholder-image"></div>`;
+                            gallery.appendChild(placeholderWrapper);
+                        }
+                    }
+
+                    // Call the dedicated lazy loader for the new images
+                    lazyLoadDetailImages();
 
                     detailContainer.classList.add('expanded');
                     detailBackdrop.classList.add('expanded');
