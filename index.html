@@ -212,7 +212,7 @@
             <!-- MODIFIED Album Detail Container -->
             <div id="album-detail-container" class="absolute bottom-0 left-0 right-0 p-4 z-30">
                 <div
-                    class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-12 gap-6 h-[20vh]">
+                    class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[20vh]">
                     <!-- Image Gallery (37.5% width) -->
                     <div id="detail-image-gallery" class="grid grid-cols-3 gap-4 h-full md:col-span-5">
                         <!-- Images and placeholders will be dynamically inserted here -->
@@ -245,7 +245,7 @@
 
     <!-- Close Button -->
     <button id="close-comparison-button"
-        class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-10">
+        class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors bg-gray-900/50 rounded-full z-10">
         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -253,19 +253,19 @@
     </button>
 
     <!-- Comparison Grid -->
-    <div id="comparison-grid" class="flex-grow w-full h-full min-h-0">
+    <div id="comparison-grid" class="w-full h-full min-h-0">
         <!-- Comparison items will be dynamically inserted here -->
     </div>
 
     <!-- NEW Global Navigation -->
-    <div id="comparison-navigation" class="flex-shrink-0 p-4 flex items-center justify-center space-x-6 bg-gray-900/50 rounded-t-lg">
-        <button id="global-prev-btn" class="nav-button">
+    <div id="comparison-navigation" class="flex-shrink-0 p-4 flex items-center justify-center space-x-6 bg-gray-900/50 rounded-full">
+        <button id="global-prev-btn" class="nav-button rounded-full">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         </button>
         <div class="text-white text-xl font-medium">
             <span id="global-image-counter-current">1</span> / <span id="global-image-counter-total">?</span>
         </div>
-        <button id="global-next-btn" class="nav-button">
+        <button id="global-next-btn" class="nav-button rounded-full">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
         </button>
     </div>

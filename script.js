@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
-     * REWRITTEN: Shows the comparison view with global navigation.
+     * REWRITTEN: Shows the comparison view with a dynamic flexbox layout.
      */
     function showComparisonView() {
         if (queue.length < 2) {
@@ -435,8 +435,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             comparisonNavigation.classList.remove('hidden');
         }
 
-        comparisonGrid.style.gridTemplateColumns = `repeat(${queue.length}, 1fr)`;
-        comparisonGrid.innerHTML = ''; // Clear previous content
+        // Clear previous content and remove any old inline styles
+        comparisonGrid.innerHTML = '';
+        comparisonGrid.removeAttribute('style');
 
         queue.forEach((album, queueIndex) => {
             const item = document.createElement('div');
@@ -446,7 +447,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const imageUrl = album.imageUrls.length > 0 ? album.imageUrls[0] : '';
 
             item.innerHTML = `
-                <h3 class="text-lg font-bold text-center truncate text-white">${album.title}</h3>
                 <div class="image-container">
                     <img src="${imageUrl}" title="${album.title}">
                 </div>
