@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const card = document.createElement('div');
         card.className = 'album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none';
 
+        card.dataset.id = album._id;
         card.dataset.title = album.title;
         card.dataset.description = album.description || 'No description available.';
         card.dataset.images = JSON.stringify(album.imageUrls);
@@ -124,6 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         albumCache = [];
         document.querySelectorAll('.album-card').forEach(card => {
             albumCache.push({
+                id: card.dataset.id,
                 title: card.querySelector('.album-title').textContent.toLowerCase(),
                 element: card
             });
@@ -170,22 +172,83 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const filterAlbums = (query) => {
         query = query.toLowerCase();
+        const transitionDuration = 300; // This must match the duration in your CSS
+
         albumCache.forEach(album => {
             const isVisible = album.title.includes(query);
-            album.element.style.display = isVisible ? '' : 'none';
+            const card = album.element;
+            const isHidden = card.classList.contains('hidden-by-filter');
+
+            if (isVisible && isHidden) {
+                // --- Animate IN ---
+                // 1. Make the card take up space in the grid again.
+                card.style.display = '';
+                
+                // 2. Use a tiny delay to ensure the browser applies the display change
+                //    before we trigger the animation by removing the class.
+                setTimeout(() => {
+                    card.classList.remove('hidden-by-filter');
+                }, 10);
+
+            } else if (!isVisible && !isHidden) {
+                // --- Animate OUT ---
+                // 1. Add the class to trigger the fade-out and scale-down animation.
+                card.classList.add('hidden-by-filter');
+                
+                // 2. After the animation finishes, set display to 'none' 
+                //    to collapse the space in the grid.
+                setTimeout(() => {
+                    card.style.display = 'none';
+                }, transitionDuration);
+            }
         });
+    };
+
+    const showSuggestions = (query) => {
+        if (!query) {
+            suggestionsBox.classList.add('hidden');
+            return;
+        }
+        const matchedAlbums = albumCache
+            .filter(album => album.title.includes(query.toLowerCase()))
+            .map(album => album.title);
+
+        if (matchedAlbums.length > 0) {
+            suggestionsBox.innerHTML = matchedAlbums
+                .map(title => `<div class="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">${title}</div>`)
+                .join('');
+            suggestionsBox.classList.remove('hidden');
+        } else {
+            suggestionsBox.classList.add('hidden');
+        }
     };
 
     searchInput.addEventListener('input', (e) => {
         const query = e.target.value;
         filterAlbums(query);
+        showSuggestions(query);
         clearSearchButton.classList.toggle('hidden', !query);
     });
 
     clearSearchButton.addEventListener('click', () => {
         searchInput.value = '';
         filterAlbums('');
+        suggestionsBox.classList.add('hidden');
         clearSearchButton.classList.add('hidden');
+    });
+
+    suggestionsBox.addEventListener('click', (e) => {
+        if (e.target.tagName === 'DIV') {
+            searchInput.value = e.target.textContent;
+            filterAlbums(e.target.textContent);
+            suggestionsBox.classList.add('hidden');
+        }
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.relative')) {
+            suggestionsBox.classList.add('hidden');
+        }
     });
 
     // --- Dedicated Lazy Loader for Detail View Images ---
@@ -209,9 +272,9 @@ document.addEventListener('DOMContentLoaded', async () => {
      * Syncs the visual state of album cards in the grid with the queue.
      */
     function updateGridQueueStyles() {
-        const queuedTitles = new Set(queue.map(album => album.title));
+        const queuedIds = new Set(queue.map(album => album._id));
         albumCache.forEach(cachedAlbum => {
-            if (queuedTitles.has(cachedAlbum.title)) {
+            if (queuedIds.has(cachedAlbum.id)) {
                 cachedAlbum.element.classList.add('queued');
             } else {
                 cachedAlbum.element.classList.remove('queued');
@@ -258,19 +321,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         queue.forEach(album => {
             const item = document.createElement('div');
             item.className = 'flex items-center justify-between bg-gray-100 dark:bg-gray-700/50 p-3 rounded-lg';
+            // Use data-id instead of data-title
             item.innerHTML = `
                 <span class="font-medium truncate pr-4">${album.title}</span>
-                <button data-title="${album.title}" class="remove-from-queue-btn flex-shrink-0 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                <button data-id="${album._id}" class="remove-from-queue-btn flex-shrink-0 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
                 </button>
             `;
             queueList.appendChild(item);
         });
 
-        // Re-attach event listeners for the new remove buttons
+        // Re-attach event listeners to use the new data-id
         document.querySelectorAll('.remove-from-queue-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                removeFromQueue(btn.dataset.title);
+                removeFromQueue(btn.dataset.id);
             });
         });
     }
@@ -279,11 +343,12 @@ document.addEventListener('DOMContentLoaded', async () => {
      * Adds an album to the queue and updates the UI.
      */
     function addToQueue(albumData) {
-        if (!queue.some(item => item.title === albumData.title)) {
+        // Check for ID instead of title
+        if (!queue.some(item => item._id === albumData._id)) {
             queue.push(albumData);
             updateQueueButton();
             renderQueueList();
-            updateDetailActionButton(); // Update button in detail view
+            updateDetailActionButton();
             updateGridQueueStyles();
         }
     }
@@ -291,12 +356,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     /**
      * Removes an album from the queue and updates the UI.
      */
-    function removeFromQueue(albumTitle) {
-        queue = queue.filter(item => item.title !== albumTitle);
+    function removeFromQueue(albumId) { // Parameter changed from albumTitle to albumId
+        // Filter by ID instead of title
+        queue = queue.filter(item => item._id !== albumId);
         updateQueueButton();
         renderQueueList();
-        updateDetailActionButton(); // Update button in detail view
-            updateGridQueueStyles();
+        updateDetailActionButton();
+        updateGridQueueStyles();
     }
 
     /**
@@ -323,8 +389,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateDetailActionButton() {
         if (!currentlyOpenCard) return;
 
-        const title = currentlyOpenCard.dataset.title;
-        const isInQueue = queue.some(item => item.title === title);
+        const id = currentlyOpenCard.dataset.id; // Get ID from the card
+        const isInQueue = queue.some(item => item._id === id); // Check queue using ID
         detailActionButtonContainer.innerHTML = ''; // Clear previous button
 
         let button;
@@ -333,17 +399,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             button.className = 'bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors h-full w-full flex items-center justify-center';
             button.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>`; // Minus Icon
             button.onclick = () => {
-                removeFromQueue(title);
+                removeFromQueue(id); // Use ID to remove
                 closeDetailView();
             };
         } else {
             button = document.createElement('button');
             button.className = 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors h-full w-full flex items-center justify-center';
             button.innerHTML = `+`;
-            button.style.fontSize = '2.5rem'; // Make the plus bigger
+            button.style.fontSize = '2.5rem';
             button.style.lineHeight = '1';
             button.onclick = () => {
+                // Construct the album data object, including the ID
                 const albumData = {
+                    _id: currentlyOpenCard.dataset.id,
                     title: currentlyOpenCard.dataset.title,
                     description: currentlyOpenCard.dataset.description,
                     imageUrls: JSON.parse(currentlyOpenCard.dataset.images || '[]')
