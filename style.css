@@ -144,3 +144,45 @@
     font-size: 2rem;
     font-weight: lighter;
 }
+
+/* Custom scrollbar for the queue list */
+#queue-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#queue-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#queue-list::-webkit-scrollbar-thumb {
+    background: #10b981; /* green-500 */
+    border-radius: 3px;
+}
+
+#queue-list::-webkit-scrollbar-thumb:hover {
+    background: #059669; /* green-600 */
+}
+
+/* Style for album cards that are in the queue */
+.album-card.queued {
+    box-shadow: 0 0 0 3px #10b981; /* green-500 */
+    transform: translateY(-4px) scale(1.02);
+}
+
+/* Keyframe animation for the queue button */
+@keyframes pulse-bounce {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.25);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Class to apply the animation */
+.animate-queue-button {
+    animation: pulse-bounce 0.4s ease-in-out;
+}

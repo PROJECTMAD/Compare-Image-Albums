@@ -7,6 +7,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     let albumCache = [];
     const albumsGrid = document.getElementById('albums-grid');
 
+    // --- Queue Management ---
+    let queue = [];
+    const queueButton = document.getElementById('queue-button');
+    const queueCount = document.getElementById('queue-count');
+    const queueMenuOverlay = document.getElementById('queue-menu-overlay');
+    const closeQueueMenuButton = document.getElementById('close-queue-menu-button');
+    const queueList = document.getElementById('queue-list');
+    const clearQueueButton = document.getElementById('clear-queue-button');
+    const compareButton = document.getElementById('compare-button');
+    const detailActionButtonContainer = document.getElementById('detail-action-button-container');
+
     /**
      * A generic function to make calls to the REST API.
      */
@@ -191,6 +202,176 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
         });
     };
+
+    // --- Queue UI and Logic ---
+
+    /**
+     * Syncs the visual state of album cards in the grid with the queue.
+     */
+    function updateGridQueueStyles() {
+        const queuedTitles = new Set(queue.map(album => album.title));
+        albumCache.forEach(cachedAlbum => {
+            if (queuedTitles.has(cachedAlbum.title)) {
+                cachedAlbum.element.classList.add('queued');
+            } else {
+                cachedAlbum.element.classList.remove('queued');
+            }
+        });
+    }
+
+    /**
+     * Updates the floating queue button's visibility, count, and animates it.
+     */
+    function updateQueueButton() {
+        const oldLength = parseInt(queueCount.textContent, 10);
+        const newLength = queue.length;
+
+        queueCount.textContent = newLength;
+
+        if (newLength > 0) {
+            queueButton.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+        } else {
+            queueButton.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+            closeQueueMenu(); // Close menu if queue becomes empty
+        }
+
+        // Animate the button only if the count has changed.
+        if (oldLength !== newLength) {
+            queueButton.classList.add('animate-queue-button');
+            // Remove the class after the animation completes to allow it to be re-triggered.
+            setTimeout(() => {
+                queueButton.classList.remove('animate-queue-button');
+            }, 400); // Must match the animation duration in CSS
+        }
+    }
+
+    /**
+     * Renders the list of albums inside the queue menu.
+     */
+    function renderQueueList() {
+        queueList.innerHTML = '';
+        if (queue.length === 0) {
+            queueList.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center">The queue is empty.</p>`;
+            return;
+        }
+
+        queue.forEach(album => {
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between bg-gray-100 dark:bg-gray-700/50 p-3 rounded-lg';
+            item.innerHTML = `
+                <span class="font-medium truncate pr-4">${album.title}</span>
+                <button data-title="${album.title}" class="remove-from-queue-btn flex-shrink-0 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                </button>
+            `;
+            queueList.appendChild(item);
+        });
+
+        // Re-attach event listeners for the new remove buttons
+        document.querySelectorAll('.remove-from-queue-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                removeFromQueue(btn.dataset.title);
+            });
+        });
+    }
+
+    /**
+     * Adds an album to the queue and updates the UI.
+     */
+    function addToQueue(albumData) {
+        if (!queue.some(item => item.title === albumData.title)) {
+            queue.push(albumData);
+            updateQueueButton();
+            renderQueueList();
+            updateDetailActionButton(); // Update button in detail view
+            updateGridQueueStyles();
+        }
+    }
+
+    /**
+     * Removes an album from the queue and updates the UI.
+     */
+    function removeFromQueue(albumTitle) {
+        queue = queue.filter(item => item.title !== albumTitle);
+        updateQueueButton();
+        renderQueueList();
+        updateDetailActionButton(); // Update button in detail view
+            updateGridQueueStyles();
+    }
+
+    /**
+     * Opens the queue menu.
+     */
+    function openQueueMenu() {
+        renderQueueList();
+        queueMenuOverlay.classList.remove('opacity-0', 'pointer-events-none');
+        queueMenuOverlay.querySelector('div').classList.remove('scale-95');
+    }
+
+    /**
+     * Closes the queue menu.
+     */
+    function closeQueueMenu() {
+        queueMenuOverlay.classList.add('opacity-0');
+        queueMenuOverlay.querySelector('div').classList.add('scale-95');
+        setTimeout(() => queueMenuOverlay.classList.add('pointer-events-none'), 300);
+    }
+
+    /**
+     * Updates the add/remove button in the album detail view based on queue status.
+     */
+    function updateDetailActionButton() {
+        if (!currentlyOpenCard) return;
+
+        const title = currentlyOpenCard.dataset.title;
+        const isInQueue = queue.some(item => item.title === title);
+        detailActionButtonContainer.innerHTML = ''; // Clear previous button
+
+        let button;
+        if (isInQueue) {
+            button = document.createElement('button');
+            button.className = 'bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors h-full w-full flex items-center justify-center';
+            button.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>`; // Minus Icon
+            button.onclick = () => {
+                removeFromQueue(title);
+                closeDetailView();
+            };
+        } else {
+            button = document.createElement('button');
+            button.className = 'bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors h-full w-full flex items-center justify-center';
+            button.innerHTML = `+`;
+            button.style.fontSize = '2.5rem'; // Make the plus bigger
+            button.style.lineHeight = '1';
+            button.onclick = () => {
+                const albumData = {
+                    title: currentlyOpenCard.dataset.title,
+                    description: currentlyOpenCard.dataset.description,
+                    imageUrls: JSON.parse(currentlyOpenCard.dataset.images || '[]')
+                };
+                addToQueue(albumData);
+                closeDetailView();
+            };
+        }
+        detailActionButtonContainer.appendChild(button);
+    }
+
+    // Event Listeners for Queue Menu
+    queueButton.addEventListener('click', openQueueMenu);
+    closeQueueMenuButton.addEventListener('click', closeQueueMenu);
+    queueMenuOverlay.addEventListener('click', (e) => {
+        if (e.target === queueMenuOverlay) closeQueueMenu();
+    });
+    clearQueueButton.addEventListener('click', () => {
+        queue = [];
+        updateQueueButton();
+        renderQueueList();
+        updateDetailActionButton();
+        updateGridQueueStyles();
+    });
+    compareButton.addEventListener('click', () => {
+        // Functionality to be added later
+        alert('Compare functionality is not yet implemented.');
+    });
 
     // --- Popup Menu & Settings Logic ---
     const menuButton = document.getElementById('menu-button');
@@ -437,6 +618,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         detailBackdrop.classList.remove('expanded');
         currentlyOpenCard.classList.remove('ring-2', 'ring-indigo-500', 'ring-offset-2', 'dark:ring-offset-gray-900');
         currentlyOpenCard = null;
+
+        // ADD THIS LINE
+        detailActionButtonContainer.innerHTML = ''; // Clear the button when view is closed
     };
 
     function handleCardClick(card) {
@@ -485,6 +669,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         lazyLoadDetailImages();
+
+        // ADD THIS LINE at the end of the function
+        updateDetailActionButton();
 
         detailContainer.classList.add('expanded');
         detailBackdrop.classList.add('expanded');
