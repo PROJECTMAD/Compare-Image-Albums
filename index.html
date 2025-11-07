@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Music Albums v5</title>
+    <title>Modern Music Albums v7</title>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <style>
         /* Custom scrollbar for a cleaner look */
@@ -24,6 +24,8 @@
         #album-detail-container.expanded, #detail-backdrop.expanded { opacity: 1; pointer-events: auto; }
         #album-detail-container { transform: translateY(20px); transition-property: opacity, transform; transition-duration: 0.3s; }
         #album-detail-container.expanded { transform: translateY(0); }
+        #album-detail-container #detail-title { text-wrap: nowrap; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        #album-detail-container #detail-image-count { margin-left: 3rem; text-wrap: nowrap; margin-top: auto; margin-bottom: auto;}
 
         /* Skeleton Loading Animation */
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
@@ -36,7 +38,7 @@
         .lazy-image { opacity: 0; transition: opacity 0.4s ease-in-out; }
         .lazy-image.loaded { opacity: 1; }
 
-        /* --- NEW: Placeholder styles for empty image slots --- */
+        /* Placeholder styles for empty image slots */
         .placeholder-image {
             border-radius: 0.5rem;
             display: flex;
@@ -66,20 +68,44 @@
 
     <!-- Centered Popup Menu -->
     <div id="popup-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center text-center p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
-        <div id="popup-menu" class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm transform scale-95 transition-all duration-300">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Menu</h2>
-                    <button id="close-menu-button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm transform scale-95 transition-all duration-300">
+            <!-- Main Menu View -->
+            <div id="popup-menu">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Menu</h2>
+                        <button id="close-menu-button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <nav class="flex flex-col space-y-2">
+                        <a href="#" class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Albums</a>
+                        <a href="#" id="settings-button" class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Settings</a>
+                    </nav>
                 </div>
-                <nav class="flex flex-col space-y-2">
-                    <a href="#" class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Home</a>
-                    <a href="#" class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">My Favorites</a>
-                    <a href="#" class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Discover</a>
-                    <a href="#" class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Settings</a>
-                </nav>
+            </div>
+            <!-- Settings View -->
+            <div id="settings-view" class="hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Settings</h2>
+                        <button id="back-to-menu-button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        </button>
+                    </div>
+                    <div class="space-y-4 text-left">
+                        <div>
+                            <label for="db-url-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Database URL</label>
+                            <input type="text" id="db-url-input" class="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 focus:ring-indigo-500 focus:border-indigo-500" value="https://batchimagecomparer-1d67.restdb.io/rest/albums">
+                        </div>
+                        <div>
+                            <label for="api-key-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
+                            <input type="password" id="api-key-input" class="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <button id="save-settings-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50">Save</button>
+                        <p id="settings-error" class="text-red-500 text-sm mt-2 text-center h-4"></p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -110,24 +136,26 @@
 
             <!-- MODIFIED Album Detail Container -->
             <div id="album-detail-container" class="absolute bottom-0 left-0 right-0 p-4 z-30">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6 h-[20vh]">
-                    <!-- Image Gallery -->
-                    <div id="detail-image-gallery" class="grid grid-cols-4 gap-4 overflow-y-auto">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-12 gap-6 h-[20vh]">
+                    <!-- Image Gallery (37.5% width) -->
+                    <div id="detail-image-gallery" class="grid grid-cols-3 gap-4 h-full md:col-span-5">
                         <!-- Images and placeholders will be dynamically inserted here -->
                     </div>
                     
-                    <!-- Album Info (Read-Only) -->
-                    <div class="flex flex-col overflow-hidden">
+                    <!-- Album Info (50% width) -->
+                    <div class="flex flex-col overflow-hidden md:col-span-6">
                         <div class="flex justify-between items-start mb-4">
-                             <div>
-                                <h3 id="detail-title" class="text-2xl font-bold"></h3>
-                                <p id="detail-image-count" class="text-sm text-gray-500 dark:text-gray-400 font-medium"></p>
-                            </div>
-                            <button id="close-detail-view" class="text-2xl font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 leading-none">&times;</button>
+                            <h3 id="detail-title" class="text-2xl font-bold"></h3>
+                            <p id="detail-image-count" class="text-md text-gray-500 dark:text-gray-400 font-medium"></p>
                         </div>
                         <div id="detail-description" class="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg overflow-y-auto flex-grow">
                             <!-- Description will be inserted here -->
                         </div>
+                    </div>
+
+                    <!-- Add Button (12.5% width) -->
+                    <div class="flex items-center justify-end md:col-span-1">
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 rounded-lg transition-colors h-full w-full">+</button>
                     </div>
                 </div>
             </div>
@@ -137,8 +165,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             // --- API Credentials ---
-            const API_KEY = "681de6c372702c663ab3d4e9"; // <-- IMPORTANT: Replace with your actual API key
-            const DB_URL = "https://batchimagecomparer-1d67.restdb.io/rest/albums"; // <-- IMPORTANT: Replace with your actual database URL
+            let API_KEY = localStorage.getItem('API_KEY');
+            let DB_URL = localStorage.getItem('DB_URL');
 
             // --- Caching Album Data ---
             let albumCache = [];
@@ -170,6 +198,8 @@
                         const errorData = await response.json().catch(() => ({ message: response.statusText }));
                         throw new Error(`API Error: ${response.status} - ${errorData.message || 'Unknown error'}`);
                     }
+                    // If the response is successful, we return the JSON body.
+                    // For validation, we only care that this call doesn't throw an error.
                     return await response.json();
                 } catch (error) {
                     console.error('API Call Failed:', error);
@@ -205,6 +235,18 @@
              * Fetches albums from the API and populates the grid.
              */
             async function fetchAndDisplayAlbums() {
+                albumsGrid.innerHTML = ''; // Clear previous content
+                // Display skeleton loaders
+                for (let i = 0; i < 8; i++) {
+                    const skeletonCard = document.createElement('div');
+                    skeletonCard.className = 'album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden';
+                    skeletonCard.innerHTML = `
+                        <div class="relative overflow-hidden h-full">
+                            <div class="skeleton-loader absolute inset-0"></div>
+                        </div>`;
+                    albumsGrid.appendChild(skeletonCard);
+                }
+
                 try {
                     const albums = await apiCall(API_KEY, DB_URL);
                     albumsGrid.innerHTML = ''; 
@@ -217,29 +259,22 @@
                     initializeAlbumCardLogic();
 
                 } catch (error) {
-                    albumsGrid.innerHTML = `<p class="text-red-500 col-span-full text-center">Failed to load albums. Please check your API credentials and network connection.</p>`;
+                    albumsGrid.innerHTML = `<p class="text-red-500 col-span-full text-center">Failed to load albums. Please check your API credentials in the menu and your network connection.</p>`;
                 }
             }
 
             /**
              * Initializes all interactive logic for album cards.
-             * MODIFICATION: The order of operations has been changed to fix the lazy loader.
              */
             function initializeAlbumCardLogic() {
-                // --- 1. (Re)initialize Expandable Detail View Logic ---
-                // This replaces cards with clones to clear old event listeners.
-                // This MUST be done before attaching new observers or building the cache.
                 document.querySelectorAll('.album-card').forEach(card => {
                     card.replaceWith(card.cloneNode(true));
                 });
 
-                // Now, add new click event listeners to the NEW cloned nodes.
                 document.querySelectorAll('.album-card').forEach(card => {
                     card.addEventListener('click', () => handleCardClick(card));
                 });
 
-                // --- 2. (Re)build the cache for search functionality ---
-                // Do this after cloning so the 'element' reference points to the correct, final node.
                 albumCache = [];
                 document.querySelectorAll('.album-card').forEach(card => {
                     albumCache.push({
@@ -248,8 +283,6 @@
                     });
                 });
 
-                // --- 3. (Re)initialize Lazy Loading for the NEW images ---
-                // The observer will now correctly target the images inside the cloned cards.
                 const lazyImages = document.querySelectorAll('#albums-grid .lazy-image');
                 if ('IntersectionObserver' in window) {
                     const imageObserver = new IntersectionObserver((entries, observer) => {
@@ -272,7 +305,6 @@
                     }, { root: albumsGrid, rootMargin: '100px 0px', threshold: 0.01 });
                     lazyImages.forEach(img => imageObserver.observe(img));
                 } else {
-                    // Fallback for older browsers
                     lazyImages.forEach(img => {
                         img.src = img.dataset.src;
                         img.classList.add('loaded');
@@ -294,53 +326,18 @@
                 });
             };
 
-            const showSuggestions = (query) => {
-                if (!query) {
-                    suggestionsBox.classList.add('hidden');
-                    return;
-                }
-                const matchedAlbums = albumCache
-                    .filter(album => album.title.includes(query.toLowerCase()))
-                    .map(album => album.title);
-
-                if (matchedAlbums.length > 0) {
-                    suggestionsBox.innerHTML = matchedAlbums
-                        .map(title => `<div class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">${title}</div>`)
-                        .join('');
-                    suggestionsBox.classList.remove('hidden');
-                } else {
-                    suggestionsBox.classList.add('hidden');
-                }
-            };
-
             searchInput.addEventListener('input', (e) => {
                 const query = e.target.value;
                 filterAlbums(query);
-                showSuggestions(query);
                 clearSearchButton.classList.toggle('hidden', !query);
             });
 
             clearSearchButton.addEventListener('click', () => {
                 searchInput.value = '';
                 filterAlbums('');
-                suggestionsBox.classList.add('hidden');
                 clearSearchButton.classList.add('hidden');
             });
-
-            suggestionsBox.addEventListener('click', (e) => {
-                if (e.target.tagName === 'DIV') {
-                    searchInput.value = e.target.textContent;
-                    filterAlbums(e.target.textContent);
-                    suggestionsBox.classList.add('hidden');
-                }
-            });
             
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.relative')) {
-                    suggestionsBox.classList.add('hidden');
-                }
-            });
-
             // --- Dedicated Lazy Loader for Detail View Images ---
             const lazyLoadDetailImages = () => {
                 const detailImages = document.querySelectorAll('#detail-image-gallery .lazy-image');
@@ -356,35 +353,132 @@
                 });
             };
 
-            // --- Popup Menu Logic ---
+            // --- Popup Menu & Settings Logic ---
             const menuButton = document.getElementById('menu-button');
             const closeMenuButton = document.getElementById('close-menu-button');
             const menuOverlay = document.getElementById('popup-menu-overlay');
+            const popupMenuContainer = menuOverlay.querySelector('div');
             const popupMenu = document.getElementById('popup-menu');
+            const settingsView = document.getElementById('settings-view');
+            const settingsButton = document.getElementById('settings-button');
+            const backToMenuButton = document.getElementById('back-to-menu-button');
+            const saveSettingsButton = document.getElementById('save-settings-button');
+            const apiKeyInput = document.getElementById('api-key-input');
+            const dbUrlInput = document.getElementById('db-url-input');
+            const settingsError = document.getElementById('settings-error');
 
             const openMenu = () => {
+                apiKeyInput.value = localStorage.getItem('API_KEY') || '';
+                dbUrlInput.value = localStorage.getItem('DB_URL') || '';
+                popupMenu.classList.remove('hidden');
+                settingsView.classList.add('hidden');
+                backToMenuButton.classList.remove('hidden');
                 menuOverlay.classList.remove('pointer-events-none', 'opacity-0');
-                popupMenu.classList.add('scale-100');
-                popupMenu.classList.remove('scale-95');
+                popupMenuContainer.classList.add('scale-100');
+                popupMenuContainer.classList.remove('scale-95');
+                menuOverlay.addEventListener('click', closeMenuByBackdrop);
             };
 
             const closeMenu = () => {
                 menuOverlay.classList.add('opacity-0');
                 setTimeout(() => menuOverlay.classList.add('pointer-events-none'), 300);
-                popupMenu.classList.remove('scale-100');
-                popupMenu.classList.add('scale-95');
+                popupMenuContainer.classList.remove('scale-100');
+                popupMenuContainer.classList.add('scale-95');
             };
+
+            const closeMenuByBackdrop = (e) => {
+                if (e.target === menuOverlay) closeMenu();
+            };
+
+            const showSettingsOnboarding = () => {
+                popupMenu.classList.add('hidden');
+                settingsView.classList.remove('hidden');
+                backToMenuButton.classList.add('hidden');
+                menuOverlay.classList.remove('pointer-events-none', 'opacity-0');
+                popupMenuContainer.classList.add('scale-100');
+                popupMenuContainer.classList.remove('scale-95');
+                menuOverlay.removeEventListener('click', closeMenuByBackdrop);
+            };
+
+            settingsButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                popupMenu.classList.add('hidden');
+                settingsView.classList.remove('hidden');
+            });
+
+            backToMenuButton.addEventListener('click', () => {
+                settingsView.classList.add('hidden');
+                popupMenu.classList.remove('hidden');
+            });
+
+            /**
+             * Validates credentials by checking for either a successful response 
+             * or the specific "No sub field found" error, which implies successful authentication.
+             */
+            async function validateCredentials(key, url) {
+                try {
+                    // Attempt the API call as before.
+                    await apiCall(key, url, '?metafields=count', 'GET');
+                    // If the call succeeds without an error (e.g., a 200 OK response), credentials are valid.
+                    return true;
+                } catch (error) {
+                    // The API call failed. Now we check if it's our "successful failure".
+                    console.warn("Validation API call threw an error, checking if it's the expected one:", error.message);
+                    
+                    // If the error message contains this specific text, it means authentication passed.
+                    if (error.message && error.message.includes("No sub field found")) {
+                        console.log("Validation successful: Received expected 'No sub field found' error.");
+                        return true;
+                    }
+                    
+                    // If it's any other error (like 401 Unauthorized, network failure), it's a real failure.
+                    console.error("Credential validation failed with an unexpected error:", error);
+                    return false;
+                }
+            }
+
+            saveSettingsButton.addEventListener('click', async () => {
+                const newApiKey = apiKeyInput.value.trim();
+                const newDbUrl = dbUrlInput.value.trim();
+                settingsError.textContent = '';
+                saveSettingsButton.disabled = true;
+                saveSettingsButton.textContent = 'Validating...';
+
+                if (!newApiKey || !newDbUrl) {
+                    settingsError.textContent = 'Both fields are required.';
+                    saveSettingsButton.disabled = false;
+                    saveSettingsButton.textContent = 'Save';
+                    return;
+                }
+
+                const areValid = await validateCredentials(newApiKey, newDbUrl);
+
+                if (areValid) {
+                    localStorage.setItem('API_KEY', newApiKey);
+                    localStorage.setItem('DB_URL', newDbUrl);
+                    API_KEY = newApiKey;
+                    DB_URL = newDbUrl;
+                    
+                    saveSettingsButton.textContent = 'Saved!';
+                    setTimeout(() => {
+                        closeMenu();
+                        fetchAndDisplayAlbums();
+                        saveSettingsButton.disabled = false;
+                        saveSettingsButton.textContent = 'Save';
+                    }, 1000);
+                } else {
+                    settingsError.textContent = 'Invalid credentials or network error.';
+                    saveSettingsButton.disabled = false;
+                    saveSettingsButton.textContent = 'Save';
+                }
+            });
 
             menuButton.addEventListener('click', openMenu);
             closeMenuButton.addEventListener('click', closeMenu);
-            menuOverlay.addEventListener('click', (e) => {
-                if (e.target === menuOverlay) closeMenu();
-            });
 
             // --- Expandable Album Detail Logic ---
             const detailContainer = document.getElementById('album-detail-container');
             const detailBackdrop = document.getElementById('detail-backdrop');
-            const closeDetailButton = document.getElementById('close-detail-view');
 
             let currentlyOpenCard = null;
 
@@ -412,6 +506,7 @@
                 const description = card.dataset.description;
                 const images = JSON.parse(card.dataset.images || '[]');
 
+                document.getElementById('detail-title').title = title;
                 document.getElementById('detail-title').textContent = title;
                 document.getElementById('detail-description').textContent = description;
                 document.getElementById('detail-image-count').textContent = `${images.length} Image${images.length !== 1 ? 's' : ''}`;
@@ -419,22 +514,20 @@
                 const gallery = document.getElementById('detail-image-gallery');
                 gallery.innerHTML = ''; 
 
-                const imagesToShow = images.slice(0, 4);
+                const imagesToShow = images.slice(0, 3);
                 imagesToShow.forEach(src => {
                     const imageWrapper = document.createElement('div');
                     imageWrapper.className = 'relative w-full overflow-hidden rounded-lg';
                     imageWrapper.innerHTML = `
                         <div class="skeleton-loader absolute inset-0"></div>
                         <img data-src="${src}" class="lazy-image w-full h-full object-cover">
-                        <div class="absolute inset-0 z-10"></div>
                     `;
                     gallery.appendChild(imageWrapper);
                 });
 
-                const maxGridItems = 4;
+                const maxGridItems = 3;
                 if (imagesToShow.length < maxGridItems) {
-                    const placeholdersNeeded = maxGridItems - imagesToShow.length;
-                    for (let i = 0; i < placeholdersNeeded; i++) {
+                    for (let i = 0; i < maxGridItems - imagesToShow.length; i++) {
                         const placeholderWrapper = document.createElement('div');
                         placeholderWrapper.className = 'relative w-full overflow-hidden rounded-lg';
                         placeholderWrapper.innerHTML = `<div class="placeholder-image"></div>`;
@@ -448,12 +541,15 @@
                 detailBackdrop.classList.add('expanded');
             }
 
-            closeDetailButton.addEventListener('click', closeDetailView);
             detailBackdrop.addEventListener('click', closeDetailView);
             menuButton.addEventListener('click', closeDetailView);
 
             // --- Initial Load ---
-            await fetchAndDisplayAlbums();
+            if (!API_KEY || !DB_URL) {
+                showSettingsOnboarding();
+            } else {
+                await fetchAndDisplayAlbums();
+            }
         });
     </script>
 </body>
