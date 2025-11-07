@@ -273,6 +273,62 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
+    // --- Dedicated Lazy Loader for Comparison View Images ---
+    const lazyLoadComparisonImages = () => {
+        const comparisonImages = document.querySelectorAll('.comparison-lazy-image');
+        
+        if ('IntersectionObserver' in window) {
+            const comparisonObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const skeleton = img.previousElementSibling;
+                        
+                        img.onload = () => {
+                            img.classList.add('loaded');
+                            if (skeleton && skeleton.classList.contains('comparison-skeleton-loader')) {
+                                setTimeout(() => {
+                                    skeleton.style.display = 'none';
+                                }, 400);
+                            }
+                        };
+                        
+                        img.onerror = () => {
+                            // Handle error - still hide skeleton
+                            if (skeleton && skeleton.classList.contains('comparison-skeleton-loader')) {
+                                skeleton.style.display = 'none';
+                            }
+                            img.classList.add('loaded');
+                        };
+                        
+                        img.src = img.dataset.src;
+                        observer.unobserve(img);
+                    }
+                });
+            }, {
+                root: comparisonGrid,
+                rootMargin: '50px 0px',
+                threshold: 0.01
+            });
+            
+            comparisonImages.forEach(img => comparisonObserver.observe(img));
+        } else {
+            // Fallback for browsers without IntersectionObserver
+            comparisonImages.forEach(img => {
+                const skeleton = img.previousElementSibling;
+                img.onload = () => {
+                    img.classList.add('loaded');
+                    if (skeleton && skeleton.classList.contains('comparison-skeleton-loader')) {
+                        setTimeout(() => {
+                            skeleton.style.display = 'none';
+                        }, 400);
+                    }
+                };
+                img.src = img.dataset.src;
+            });
+        }
+    };
+
     // --- Queue UI and Logic ---
 
     function updateGridQueueStyles() {
@@ -418,6 +474,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /**
      * REWRITTEN: Shows the comparison view with a dynamic flexbox layout.
+     * Enhanced with skeleton loaders and lazy loading.
      */
     function showComparisonView() {
         if (queue.length < 2) {
@@ -448,11 +505,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             item.innerHTML = `
                 <div class="image-container">
-                    <img src="${imageUrl}" title="${album.title}">
+                    <div class="comparison-skeleton-loader"></div>
+                    <img data-src="${imageUrl}" class="comparison-lazy-image" title="${album.title}">
                 </div>
             `;
             comparisonGrid.appendChild(item);
         });
+
+        // Initialize lazy loading for comparison images
+        lazyLoadComparisonImages();
 
         updateGlobalCounter();
         comparisonModal.classList.remove('opacity-0', 'pointer-events-none');
@@ -473,8 +534,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         globalNextBtn.disabled = globalImageIndex >= maxImagesInQueue - 1;
     }
 
+    // Track current loading index to prevent mixing images from fast navigation
+    let currentLoadingIndex = 0;
+
     /**
      * NEW: Updates all images in the comparison grid to a new index.
+     * Enhanced to show skeleton loaders during image transitions and prevent image mixing.
      */
     function updateAllComparisonImages(newIndex) {
         if (newIndex < 0 || newIndex >= maxImagesInQueue) {
@@ -482,6 +547,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         globalImageIndex = newIndex;
+        currentLoadingIndex++; // Increment to track this specific navigation request
+        const thisLoadingIndex = currentLoadingIndex; // Capture the current loading index
 
         const comparisonItems = document.querySelectorAll('.comparison-item');
         comparisonItems.forEach(item => {
@@ -489,10 +556,50 @@ document.addEventListener('DOMContentLoaded', async () => {
             const album = queue[queueIndex];
 
             if (album.imageUrls.length > 0) {
-                // Use modulo to loop within an album's own images if it's shorter
                 const imageIndexForThisAlbum = globalImageIndex % album.imageUrls.length;
-                item.querySelector('img').src = album.imageUrls[imageIndexForThisAlbum];
-                //item.querySelector('.local-image-counter').textContent = imageIndexForThisAlbum + 1;
+                const img = item.querySelector('img');
+                const imageContainer = item.querySelector('.image-container');
+                
+                // Show skeleton loader if it doesn't exist
+                let skeleton = imageContainer.querySelector('.comparison-skeleton-loader');
+                if (!skeleton) {
+                    skeleton = document.createElement('div');
+                    skeleton.className = 'comparison-skeleton-loader';
+                    imageContainer.insertBefore(skeleton, img);
+                }
+                
+                // Fade out current image
+                img.classList.remove('loaded');
+                skeleton.style.display = 'block';
+                
+                // Update image source
+                const newImageUrl = album.imageUrls[imageIndexForThisAlbum];
+                img.dataset.src = newImageUrl;
+                
+                // Load new image with validation to prevent mixing
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    // Only apply the image if this is still the current navigation request
+                    if (thisLoadingIndex === currentLoadingIndex) {
+                        img.src = newImageUrl;
+                        img.classList.add('loaded');
+                        setTimeout(() => {
+                            if (skeleton && thisLoadingIndex === currentLoadingIndex) {
+                                skeleton.style.display = 'none';
+                            }
+                        }, 400);
+                    }
+                };
+                tempImg.onerror = () => {
+                    // Hide skeleton even on error, but only if this is the current request
+                    if (thisLoadingIndex === currentLoadingIndex) {
+                        img.classList.add('loaded');
+                        if (skeleton) {
+                            skeleton.style.display = 'none';
+                        }
+                    }
+                };
+                tempImg.src = newImageUrl;
             }
         });
 
