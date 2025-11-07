@@ -1,0 +1,146 @@
+/* Custom scrollbar for a cleaner look */
+#albums-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+#albums-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#albums-grid::-webkit-scrollbar-thumb {
+    background: #4f46e5;
+    border-radius: 4px;
+}
+
+#albums-grid::-webkit-scrollbar-thumb:hover {
+    background: #4338ca;
+}
+
+/* Album Cards */
+#albums-grid .album-card {
+    width: 270px;
+    height: calc(270px * 1.7);
+    aspect-ratio: 1.7;
+}
+
+#albums-grid .album-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.image {
+    flex: 1;
+    height: 405px;
+    width: 270px;
+    object-fit: cover;
+    object-position: top;
+    aspect-ratio: 1.46;
+    transition: transform 400ms ease;
+}
+
+.image.top {
+    object-position: top center;
+}
+
+/* Animation for the detail panel and backdrop */
+#album-detail-container,
+#detail-backdrop {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    pointer-events: none;
+}
+
+#album-detail-container.expanded,
+#detail-backdrop.expanded {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#album-detail-container {
+    transform: translateY(20px);
+    transition-property: opacity, transform;
+    transition-duration: 0.3s;
+}
+
+#album-detail-container.expanded {
+    transform: translateY(0);
+}
+
+#album-detail-container #detail-title {
+    text-wrap: nowrap;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#album-detail-container #detail-image-count {
+    margin-left: 3rem;
+    text-wrap: nowrap;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+/* Skeleton Loading Animation */
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.skeleton-loader {
+    overflow: hidden;
+    background-color: #4f5570;
+}
+
+.dark .skeleton-loader {
+    background-color: #374151;
+}
+
+.skeleton-loader::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+    animation: shimmer 1.5s infinite;
+}
+
+.dark .skeleton-loader::after {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* Ensures the image fades in smoothly */
+.lazy-image {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+
+.lazy-image.loaded {
+    opacity: 1;
+}
+
+/* Placeholder styles for empty image slots */
+.placeholder-image {
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #4b5563;
+}
+
+.placeholder-image::after {
+    content: "?";
+    opacity: 0.4;
+    font-size: 2rem;
+    font-weight: lighter;
+}

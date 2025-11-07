@@ -1,86 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Music Albums v7</title>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-    <style>
-        /* Custom scrollbar for a cleaner look */
-        #albums-grid::-webkit-scrollbar { width: 8px; }
-        #albums-grid::-webkit-scrollbar-track { background: transparent; }
-        #albums-grid::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
-        #albums-grid::-webkit-scrollbar-thumb:hover { background: #4338ca; }
-
-        /* Album Cards */
-        #albums-grid .album-card { width: 270px; height: calc(270px * 1.7); aspect-ratio: 1.7; }
-        #albums-grid .album-title { overflow: hidden; text-overflow: ellipsis; text-align: center; white-space: nowrap; }
-
-        .image { flex: 1; height: 405px; width: 270px; object-fit: cover; object-position: top; aspect-ratio: 1.46; transition: transform 400ms ease; }
-        .image.top { object-position: top center; }
-
-        /* Animation for the detail panel and backdrop */
-        #album-detail-container, #detail-backdrop { opacity: 0; transition: opacity 0.3s ease-out; pointer-events: none; }
-        #album-detail-container.expanded, #detail-backdrop.expanded { opacity: 1; pointer-events: auto; }
-        #album-detail-container { transform: translateY(20px); transition-property: opacity, transform; transition-duration: 0.3s; }
-        #album-detail-container.expanded { transform: translateY(0); }
-        #album-detail-container #detail-title { text-wrap: nowrap; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        #album-detail-container #detail-image-count { margin-left: 3rem; text-wrap: nowrap; margin-top: auto; margin-bottom: auto;}
-
-        /* Skeleton Loading Animation */
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-        .skeleton-loader { overflow: hidden; background-color: #4f5570; }
-        .dark .skeleton-loader { background-color: #374151; }
-        .skeleton-loader::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%); animation: shimmer 1.5s infinite; }
-        .dark .skeleton-loader::after { background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%); }
-
-        /* Ensures the image fades in smoothly */
-        .lazy-image { opacity: 0; transition: opacity 0.4s ease-in-out; }
-        .lazy-image.loaded { opacity: 1; }
-
-        /* Placeholder styles for empty image slots */
-        .placeholder-image {
-            border-radius: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            border: 1px solid #4b5563;
-        }
-        .placeholder-image::after {
-            content: "?";
-            opacity: 0.4;
-            font-size: 2rem;
-            font-weight: lighter;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 h-screen overflow-hidden">
 
     <!-- Backdrop for Detail View -->
     <div id="detail-backdrop" class="absolute inset-0 bg-gray-900/70 backdrop-blur-sm z-20"></div>
 
     <!-- Floating Menu Button -->
-    <button id="menu-button" class="fixed bottom-6 right-6 bg-indigo-600 hover:bg-indigo-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center z-10 transition-transform hover:scale-110">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+    <button id="menu-button"
+        class="fixed bottom-6 right-6 bg-indigo-600 hover:bg-indigo-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center z-10 transition-transform hover:scale-110">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+        </svg>
     </button>
 
     <!-- Centered Popup Menu -->
-    <div id="popup-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center text-center p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm transform scale-95 transition-all duration-300">
+    <div id="popup-menu-overlay"
+        class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center text-center p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
+        <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm transform scale-95 transition-all duration-300">
             <!-- Main Menu View -->
             <div id="popup-menu">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Menu</h2>
-                        <button id="close-menu-button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        <button id="close-menu-button"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
                         </button>
                     </div>
                     <nav class="flex flex-col space-y-2">
-                        <a href="#" class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Albums</a>
-                        <a href="#" id="settings-button" class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Settings</a>
+                        <a href="#"
+                            class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Albums</a>
+                        <a href="#" id="settings-button"
+                            class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Settings</a>
                     </nav>
                 </div>
             </div>
@@ -89,20 +54,32 @@
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Settings</h2>
-                        <button id="back-to-menu-button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        <button id="back-to-menu-button"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
                         </button>
                     </div>
                     <div class="space-y-4 text-left">
                         <div>
-                            <label for="db-url-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Database URL</label>
-                            <input type="text" id="db-url-input" class="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 focus:ring-indigo-500 focus:border-indigo-500" value="https://batchimagecomparer-1d67.restdb.io/rest/albums">
+                            <label for="db-url-input"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Database
+                                URL</label>
+                            <input type="text" id="db-url-input"
+                                class="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                                value="https://batchimagecomparer-1d67.restdb.io/rest/albums">
                         </div>
                         <div>
-                            <label for="api-key-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
-                            <input type="password" id="api-key-input" class="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 focus:ring-indigo-500 focus:border-indigo-500">
+                            <label for="api-key-input"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key</label>
+                            <input type="password" id="api-key-input"
+                                class="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
-                        <button id="save-settings-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50">Save</button>
+                        <button id="save-settings-button"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50">Save</button>
                         <p id="settings-error" class="text-red-500 text-sm mt-2 text-center h-4"></p>
                     </div>
                 </div>
@@ -115,442 +92,84 @@
         <div class="flex-shrink-0">
             <h1 class="text-4xl font-bold mb-4 text-center">Your Album Collection</h1>
             <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3"><svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg></span>
-                <input id="search-input" type="text" placeholder="Search albums by title..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
-                <button id="clear-search-button" class="absolute inset-y-0 right-0 flex items-center pr-3 hidden"><svg class="h-5 w-5 text-gray-400 hover:text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg></button>
-                <div id="suggestions-box" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hidden"></div>
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3"><svg class="h-5 w-5 text-gray-400"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                            clip-rule="evenodd" />
+                    </svg></span>
+                <input id="search-input" type="text" placeholder="Search albums by title..."
+                    class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
+                <button id="clear-search-button" class="absolute inset-y-0 right-0 flex items-center pr-3 hidden"><svg
+                        class="h-5 w-5 text-gray-400 hover:text-gray-600" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clip-rule="evenodd" />
+                    </svg></button>
+                <div id="suggestions-box"
+                    class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hidden">
+                </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 mb-8">
-                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Genre</option></select>
-                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Artist</option></select>
-                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Year</option></select>
-                <select class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500"><option>Rating</option></select>
+                <select
+                    class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option>Genre</option>
+                </select>
+                <select
+                    class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option>Artist</option>
+                </select>
+                <select
+                    class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option>Year</option>
+                </select>
+                <select
+                    class="border-gray-200 dark:border-gray-700 rounded-lg p-2 dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option>Rating</option>
+                </select>
             </div>
         </div>
 
         <div class="relative flex-grow min-h-0">
             <!-- Albums Grid -->
-            <div id="albums-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 h-full overflow-y-auto p-2">
+            <div id="albums-grid"
+                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 h-full overflow-y-auto p-2">
                 <!-- Album cards will be dynamically inserted here -->
             </div>
 
             <!-- MODIFIED Album Detail Container -->
             <div id="album-detail-container" class="absolute bottom-0 left-0 right-0 p-4 z-30">
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-12 gap-6 h-[20vh]">
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-12 gap-6 h-[20vh]">
                     <!-- Image Gallery (37.5% width) -->
                     <div id="detail-image-gallery" class="grid grid-cols-3 gap-4 h-full md:col-span-5">
                         <!-- Images and placeholders will be dynamically inserted here -->
                     </div>
-                    
+
                     <!-- Album Info (50% width) -->
                     <div class="flex flex-col overflow-hidden md:col-span-6">
                         <div class="flex justify-between items-start mb-4">
                             <h3 id="detail-title" class="text-2xl font-bold"></h3>
                             <p id="detail-image-count" class="text-md text-gray-500 dark:text-gray-400 font-medium"></p>
                         </div>
-                        <div id="detail-description" class="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg overflow-y-auto flex-grow">
+                        <div id="detail-description"
+                            class="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg overflow-y-auto flex-grow">
                             <!-- Description will be inserted here -->
                         </div>
                     </div>
 
                     <!-- Add Button (12.5% width) -->
                     <div class="flex items-center justify-end md:col-span-1">
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 rounded-lg transition-colors h-full w-full">+</button>
+                        <button
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 rounded-lg transition-colors h-full w-full">+</button>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            // --- API Credentials ---
-            let API_KEY = localStorage.getItem('API_KEY');
-            let DB_URL = localStorage.getItem('DB_URL');
-
-            // --- Caching Album Data ---
-            let albumCache = [];
-            const albumsGrid = document.getElementById('albums-grid');
-
-            /**
-             * A generic function to make calls to the REST API.
-             */
-            async function apiCall(userApiKey, userDbUrl, endpoint = '', method = 'GET', body = null) {
-                if (!userApiKey || !userDbUrl) {
-                    throw new Error('API Key or DB URL not provided.');
-                }
-                const base = userDbUrl.endsWith('/') ? userDbUrl.slice(0, -1) : userDbUrl;
-                const fullUrl = endpoint ? (base + (endpoint.startsWith('/') ? endpoint : '/' + endpoint)) : base;
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-apikey': userApiKey,
-                        'cache-control': 'no-cache'
-                    }
-                };
-                if (body) {
-                    options.body = JSON.stringify(body);
-                }
-                try {
-                    const response = await fetch(fullUrl, options);
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ message: response.statusText }));
-                        throw new Error(`API Error: ${response.status} - ${errorData.message || 'Unknown error'}`);
-                    }
-                    // If the response is successful, we return the JSON body.
-                    // For validation, we only care that this call doesn't throw an error.
-                    return await response.json();
-                } catch (error) {
-                    console.error('API Call Failed:', error);
-                    throw error;
-                }
-            }
-
-            /**
-             * Creates an HTML element for a single album.
-             */
-            function createAlbumCard(album) {
-                const card = document.createElement('div');
-                card.className = 'album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none';
-                
-                card.dataset.title = album.title;
-                card.dataset.description = album.description || 'No description available.';
-                card.dataset.images = JSON.stringify(album.imageUrls);
-
-                const imageUrl = album.imageUrls && album.imageUrls.length > 0 ? album.imageUrls[0] : '';
-
-                card.innerHTML = `
-                    <div class="relative overflow-hidden">
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="${imageUrl}" class="lazy-image image">
-                        <div class="absolute inset-0"></div>
-                    </div>
-                    <div class="p-3"><h3 class="album-title text-lg font-semibold">${album.title}</h3></div>
-                `;
-                return card;
-            }
-
-            /**
-             * Fetches albums from the API and populates the grid.
-             */
-            async function fetchAndDisplayAlbums() {
-                albumsGrid.innerHTML = ''; // Clear previous content
-                // Display skeleton loaders
-                for (let i = 0; i < 8; i++) {
-                    const skeletonCard = document.createElement('div');
-                    skeletonCard.className = 'album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden';
-                    skeletonCard.innerHTML = `
-                        <div class="relative overflow-hidden h-full">
-                            <div class="skeleton-loader absolute inset-0"></div>
-                        </div>`;
-                    albumsGrid.appendChild(skeletonCard);
-                }
-
-                try {
-                    const albums = await apiCall(API_KEY, DB_URL);
-                    albumsGrid.innerHTML = ''; 
-                    
-                    albums.forEach(album => {
-                        const card = createAlbumCard(album);
-                        albumsGrid.appendChild(card);
-                    });
-
-                    initializeAlbumCardLogic();
-
-                } catch (error) {
-                    albumsGrid.innerHTML = `<p class="text-red-500 col-span-full text-center">Failed to load albums. Please check your API credentials in the menu and your network connection.</p>`;
-                }
-            }
-
-            /**
-             * Initializes all interactive logic for album cards.
-             */
-            function initializeAlbumCardLogic() {
-                document.querySelectorAll('.album-card').forEach(card => {
-                    card.replaceWith(card.cloneNode(true));
-                });
-
-                document.querySelectorAll('.album-card').forEach(card => {
-                    card.addEventListener('click', () => handleCardClick(card));
-                });
-
-                albumCache = [];
-                document.querySelectorAll('.album-card').forEach(card => {
-                    albumCache.push({
-                        title: card.querySelector('.album-title').textContent.toLowerCase(),
-                        element: card
-                    });
-                });
-
-                const lazyImages = document.querySelectorAll('#albums-grid .lazy-image');
-                if ('IntersectionObserver' in window) {
-                    const imageObserver = new IntersectionObserver((entries, observer) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                const img = entry.target;
-                                
-                                img.onload = () => {
-                                    img.classList.add('loaded');
-                                    const skeleton = img.previousElementSibling;
-                                    if (skeleton && skeleton.classList.contains('skeleton-loader')) {
-                                        setTimeout(() => skeleton.remove(), 400);
-                                    }
-                                };
-                                
-                                img.src = img.dataset.src;
-                                observer.unobserve(img);
-                            }
-                        });
-                    }, { root: albumsGrid, rootMargin: '100px 0px', threshold: 0.01 });
-                    lazyImages.forEach(img => imageObserver.observe(img));
-                } else {
-                    lazyImages.forEach(img => {
-                        img.src = img.dataset.src;
-                        img.classList.add('loaded');
-                    });
-                }
-            }
-
-
-            // --- Search Logic ---
-            const searchInput = document.getElementById('search-input');
-            const clearSearchButton = document.getElementById('clear-search-button');
-            const suggestionsBox = document.getElementById('suggestions-box');
-
-            const filterAlbums = (query) => {
-                query = query.toLowerCase();
-                albumCache.forEach(album => {
-                    const isVisible = album.title.includes(query);
-                    album.element.style.display = isVisible ? '' : 'none';
-                });
-            };
-
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value;
-                filterAlbums(query);
-                clearSearchButton.classList.toggle('hidden', !query);
-            });
-
-            clearSearchButton.addEventListener('click', () => {
-                searchInput.value = '';
-                filterAlbums('');
-                clearSearchButton.classList.add('hidden');
-            });
-            
-            // --- Dedicated Lazy Loader for Detail View Images ---
-            const lazyLoadDetailImages = () => {
-                const detailImages = document.querySelectorAll('#detail-image-gallery .lazy-image');
-                detailImages.forEach(img => {
-                    img.src = img.dataset.src;
-                    img.onload = () => {
-                        img.classList.add('loaded');
-                        const skeleton = img.previousElementSibling;
-                        if (skeleton && skeleton.classList.contains('skeleton-loader')) {
-                            setTimeout(() => skeleton.remove(), 400);
-                        }
-                    };
-                });
-            };
-
-            // --- Popup Menu & Settings Logic ---
-            const menuButton = document.getElementById('menu-button');
-            const closeMenuButton = document.getElementById('close-menu-button');
-            const menuOverlay = document.getElementById('popup-menu-overlay');
-            const popupMenuContainer = menuOverlay.querySelector('div');
-            const popupMenu = document.getElementById('popup-menu');
-            const settingsView = document.getElementById('settings-view');
-            const settingsButton = document.getElementById('settings-button');
-            const backToMenuButton = document.getElementById('back-to-menu-button');
-            const saveSettingsButton = document.getElementById('save-settings-button');
-            const apiKeyInput = document.getElementById('api-key-input');
-            const dbUrlInput = document.getElementById('db-url-input');
-            const settingsError = document.getElementById('settings-error');
-
-            const openMenu = () => {
-                apiKeyInput.value = localStorage.getItem('API_KEY') || '';
-                dbUrlInput.value = localStorage.getItem('DB_URL') || '';
-                popupMenu.classList.remove('hidden');
-                settingsView.classList.add('hidden');
-                backToMenuButton.classList.remove('hidden');
-                menuOverlay.classList.remove('pointer-events-none', 'opacity-0');
-                popupMenuContainer.classList.add('scale-100');
-                popupMenuContainer.classList.remove('scale-95');
-                menuOverlay.addEventListener('click', closeMenuByBackdrop);
-            };
-
-            const closeMenu = () => {
-                menuOverlay.classList.add('opacity-0');
-                setTimeout(() => menuOverlay.classList.add('pointer-events-none'), 300);
-                popupMenuContainer.classList.remove('scale-100');
-                popupMenuContainer.classList.add('scale-95');
-            };
-
-            const closeMenuByBackdrop = (e) => {
-                if (e.target === menuOverlay) closeMenu();
-            };
-
-            const showSettingsOnboarding = () => {
-                popupMenu.classList.add('hidden');
-                settingsView.classList.remove('hidden');
-                backToMenuButton.classList.add('hidden');
-                menuOverlay.classList.remove('pointer-events-none', 'opacity-0');
-                popupMenuContainer.classList.add('scale-100');
-                popupMenuContainer.classList.remove('scale-95');
-                menuOverlay.removeEventListener('click', closeMenuByBackdrop);
-            };
-
-            settingsButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                popupMenu.classList.add('hidden');
-                settingsView.classList.remove('hidden');
-            });
-
-            backToMenuButton.addEventListener('click', () => {
-                settingsView.classList.add('hidden');
-                popupMenu.classList.remove('hidden');
-            });
-
-            /**
-             * Validates credentials by checking for either a successful response 
-             * or the specific "No sub field found" error, which implies successful authentication.
-             */
-            async function validateCredentials(key, url) {
-                try {
-                    // Attempt the API call as before.
-                    await apiCall(key, url, '?metafields=count', 'GET');
-                    // If the call succeeds without an error (e.g., a 200 OK response), credentials are valid.
-                    return true;
-                } catch (error) {
-                    // The API call failed. Now we check if it's our "successful failure".
-                    console.warn("Validation API call threw an error, checking if it's the expected one:", error.message);
-                    
-                    // If the error message contains this specific text, it means authentication passed.
-                    if (error.message && error.message.includes("No sub field found")) {
-                        console.log("Validation successful: Received expected 'No sub field found' error.");
-                        return true;
-                    }
-                    
-                    // If it's any other error (like 401 Unauthorized, network failure), it's a real failure.
-                    console.error("Credential validation failed with an unexpected error:", error);
-                    return false;
-                }
-            }
-
-            saveSettingsButton.addEventListener('click', async () => {
-                const newApiKey = apiKeyInput.value.trim();
-                const newDbUrl = dbUrlInput.value.trim();
-                settingsError.textContent = '';
-                saveSettingsButton.disabled = true;
-                saveSettingsButton.textContent = 'Validating...';
-
-                if (!newApiKey || !newDbUrl) {
-                    settingsError.textContent = 'Both fields are required.';
-                    saveSettingsButton.disabled = false;
-                    saveSettingsButton.textContent = 'Save';
-                    return;
-                }
-
-                const areValid = await validateCredentials(newApiKey, newDbUrl);
-
-                if (areValid) {
-                    localStorage.setItem('API_KEY', newApiKey);
-                    localStorage.setItem('DB_URL', newDbUrl);
-                    API_KEY = newApiKey;
-                    DB_URL = newDbUrl;
-                    
-                    saveSettingsButton.textContent = 'Saved!';
-                    setTimeout(() => {
-                        closeMenu();
-                        fetchAndDisplayAlbums();
-                        saveSettingsButton.disabled = false;
-                        saveSettingsButton.textContent = 'Save';
-                    }, 1000);
-                } else {
-                    settingsError.textContent = 'Invalid credentials or network error.';
-                    saveSettingsButton.disabled = false;
-                    saveSettingsButton.textContent = 'Save';
-                }
-            });
-
-            menuButton.addEventListener('click', openMenu);
-            closeMenuButton.addEventListener('click', closeMenu);
-
-            // --- Expandable Album Detail Logic ---
-            const detailContainer = document.getElementById('album-detail-container');
-            const detailBackdrop = document.getElementById('detail-backdrop');
-
-            let currentlyOpenCard = null;
-
-            const closeDetailView = () => {
-                if (!currentlyOpenCard) return;
-                detailContainer.classList.remove('expanded');
-                detailBackdrop.classList.remove('expanded');
-                currentlyOpenCard.classList.remove('ring-2', 'ring-indigo-500', 'ring-offset-2', 'dark:ring-offset-gray-900');
-                currentlyOpenCard = null;
-            };
-
-            function handleCardClick(card) {
-                if (currentlyOpenCard === card) {
-                    closeDetailView();
-                    return;
-                }
-                if (currentlyOpenCard) {
-                    closeDetailView();
-                }
-                
-                currentlyOpenCard = card;
-                card.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2', 'dark:ring-offset-gray-900');
-
-                const title = card.dataset.title;
-                const description = card.dataset.description;
-                const images = JSON.parse(card.dataset.images || '[]');
-
-                document.getElementById('detail-title').title = title;
-                document.getElementById('detail-title').textContent = title;
-                document.getElementById('detail-description').textContent = description;
-                document.getElementById('detail-image-count').textContent = `${images.length} Image${images.length !== 1 ? 's' : ''}`;
-
-                const gallery = document.getElementById('detail-image-gallery');
-                gallery.innerHTML = ''; 
-
-                const imagesToShow = images.slice(0, 3);
-                imagesToShow.forEach(src => {
-                    const imageWrapper = document.createElement('div');
-                    imageWrapper.className = 'relative w-full overflow-hidden rounded-lg';
-                    imageWrapper.innerHTML = `
-                        <div class="skeleton-loader absolute inset-0"></div>
-                        <img data-src="${src}" class="lazy-image w-full h-full object-cover">
-                    `;
-                    gallery.appendChild(imageWrapper);
-                });
-
-                const maxGridItems = 3;
-                if (imagesToShow.length < maxGridItems) {
-                    for (let i = 0; i < maxGridItems - imagesToShow.length; i++) {
-                        const placeholderWrapper = document.createElement('div');
-                        placeholderWrapper.className = 'relative w-full overflow-hidden rounded-lg';
-                        placeholderWrapper.innerHTML = `<div class="placeholder-image"></div>`;
-                        gallery.appendChild(placeholderWrapper);
-                    }
-                }
-
-                lazyLoadDetailImages();
-
-                detailContainer.classList.add('expanded');
-                detailBackdrop.classList.add('expanded');
-            }
-
-            detailBackdrop.addEventListener('click', closeDetailView);
-            menuButton.addEventListener('click', closeDetailView);
-
-            // --- Initial Load ---
-            if (!API_KEY || !DB_URL) {
-                showSettingsOnboarding();
-            } else {
-                await fetchAndDisplayAlbums();
-            }
-        });
-    </script>
+     <script src="script.js"></script> 
 </body>
+
 </html>
