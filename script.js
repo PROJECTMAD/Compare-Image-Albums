@@ -484,6 +484,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         globalImageIndex = 0; // Reset index
         maxImagesInQueue = Math.max(0, ...queue.map(album => album.imageUrls.length));
+        
+        // Reset loading state and navigation
+        isLoadingImages = false;
+        currentLoadingIndex = 0;
 
         // Hide navigation if no album has more than one image
         if (maxImagesInQueue <= 1) {
@@ -516,6 +520,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         lazyLoadComparisonImages();
 
         updateGlobalCounter();
+        setNavigationEnabled(true); // Ensure navigation buttons are properly enabled
         comparisonModal.classList.remove('opacity-0', 'pointer-events-none');
     }
 
@@ -536,23 +541,69 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Track current loading index to prevent mixing images from fast navigation
     let currentLoadingIndex = 0;
+    let isLoadingImages = false; // Track if images are currently loading
     const minSkeletonDisplayTime = 150; // Minimum time to show skeleton (ms)
+
+    /**
+     * Disables or enables navigation buttons during image loading
+     */
+    function setNavigationEnabled(enabled) {
+        const prevButton = document.getElementById('global-prev-btn');
+        const nextButton = document.getElementById('global-next-btn');
+        
+        if (prevButton && nextButton) {
+            if (enabled) {
+                prevButton.disabled = globalImageIndex <= 0;
+                nextButton.disabled = globalImageIndex >= maxImagesInQueue - 1;
+                prevButton.style.cursor = prevButton.disabled ? 'not-allowed' : 'pointer';
+                nextButton.style.cursor = nextButton.disabled ? 'not-allowed' : 'pointer';
+                prevButton.style.opacity = prevButton.disabled ? '0.4' : '1';
+                nextButton.style.opacity = nextButton.disabled ? '0.4' : '1';
+            } else {
+                prevButton.disabled = true;
+                nextButton.disabled = true;
+                prevButton.style.cursor = 'wait';
+                nextButton.style.cursor = 'wait';
+                prevButton.style.opacity = '0.5';
+                nextButton.style.opacity = '0.5';
+            }
+        }
+    }
 
     /**
      * NEW: Updates all images in the comparison grid to a new index.
      * Enhanced to show skeleton loaders during image transitions and prevent image mixing.
-     * Fixed race condition where cached images load too fast to show skeleton.
+     * Blocks navigation buttons during loading to prevent race conditions.
      */
     function updateAllComparisonImages(newIndex) {
         if (newIndex < 0 || newIndex >= maxImagesInQueue) {
             return; // Do nothing if index is out of bounds
         }
 
+        // Prevent navigation if already loading
+        if (isLoadingImages) {
+            return;
+        }
+
         globalImageIndex = newIndex;
         currentLoadingIndex++; // Increment to track this specific navigation request
         const thisLoadingIndex = currentLoadingIndex; // Capture the current loading index
+        
+        isLoadingImages = true;
+        setNavigationEnabled(false); // Disable navigation buttons
 
         const comparisonItems = document.querySelectorAll('.comparison-item');
+        let loadedCount = 0;
+        const totalItems = comparisonItems.length;
+        
+        // Function to check if all images are loaded
+        const checkAllLoaded = () => {
+            loadedCount++;
+            if (loadedCount >= totalItems && thisLoadingIndex === currentLoadingIndex) {
+                isLoadingImages = false;
+                setNavigationEnabled(true); // Re-enable navigation buttons
+            }
+        };
         comparisonItems.forEach(item => {
             const queueIndex = parseInt(item.dataset.queueIndex, 10);
             const album = queue[queueIndex];
@@ -588,6 +639,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const completeImageLoad = () => {
                     // Only apply the image if this is still the current navigation request
                     if (thisLoadingIndex !== currentLoadingIndex) {
+                        checkAllLoaded(); // Still count as loaded even if aborted
                         return; // Abort if a newer request has been made
                     }
                     
@@ -611,10 +663,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             if (skeleton && thisLoadingIndex === currentLoadingIndex) {
                                                 skeleton.style.display = 'none';
                                             }
+                                            checkAllLoaded(); // Mark this item as loaded
                                         }, 400);
+                                    } else {
+                                        checkAllLoaded(); // Mark as loaded even if request changed
                                     }
                                 });
                             });
+                        } else {
+                            checkAllLoaded(); // Mark as loaded even if request changed
                         }
                     }, remainingTime);
                 };
@@ -633,7 +690,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     skeleton.style.display = 'none';
                                 }
                             }
+                            checkAllLoaded(); // Mark as loaded even on error
                         }, remainingTime);
+                    } else {
+                        checkAllLoaded(); // Mark as loaded even if request changed
                     }
                 };
                 
