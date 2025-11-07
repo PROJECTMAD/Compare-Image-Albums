@@ -191,5 +191,65 @@
 .album-card.hidden-by-filter {
     opacity: 0;
     transform: scale(0.92);
-    pointer-events: none; /* Prevents clicking on hidden cards */
+    pointer-events: none;
+}
+
+/* --- MODIFIED COMPARISON STYLES --- */
+#comparison-grid {
+    display: grid;
+    align-items: stretch; /* Make items fill the vertical space */
+    height: 100%;
+    width: 100%;
+    gap: 1rem;
+    padding: 1rem 1rem 0 1rem; /* Add padding */
+    overflow: hidden; /* Hide any potential overflow */
+}
+
+.comparison-item {
+    display: flex;
+    flex-direction: column; /* Stack title, image, counter vertically */
+    gap: 0.5rem;
+}
+
+.comparison-item .image-container {
+    flex-grow: 1; /* Allow container to fill available space */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem; /* 6px */
+    min-height: 0; /* Critical for flexbox overflow prevention */
+}
+
+.comparison-item img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Ensures the whole image is visible and scaled */
+}
+
+/* Hide the old individual navigation */
+.comparison-item .navigation {
+    display: none;
+}
+
+/* Styles for the new global navigation */
+#comparison-navigation .nav-button {
+    background-color: rgba(79, 70, 229, 0.8); /* indigo-600 with opacity */
+    color: white;
+    border-radius: 9999px; /* rounded-full */
+    width: 3.5rem; /* 56px */
+    height: 3.5rem; /* 56px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 150ms ease-in-out;
+}
+
+#comparison-navigation .nav-button:hover {
+    background-color: rgba(79, 70, 229, 1); /* indigo-600 */
+}
+
+#comparison-navigation .nav-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }

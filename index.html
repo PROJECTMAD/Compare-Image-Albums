@@ -239,6 +239,37 @@
         </div>
     </main>
 
+<!-- MODIFIED Comparison Modal -->
+<div id="comparison-modal"
+    class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
+
+    <!-- Close Button -->
+    <button id="close-comparison-button"
+        class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-10">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </button>
+
+    <!-- Comparison Grid -->
+    <div id="comparison-grid" class="flex-grow w-full h-full min-h-0">
+        <!-- Comparison items will be dynamically inserted here -->
+    </div>
+
+    <!-- NEW Global Navigation -->
+    <div id="comparison-navigation" class="flex-shrink-0 p-4 flex items-center justify-center space-x-6 bg-gray-900/50 rounded-t-lg">
+        <button id="global-prev-btn" class="nav-button">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <div class="text-white text-xl font-medium">
+            <span id="global-image-counter-current">1</span> / <span id="global-image-counter-total">?</span>
+        </div>
+        <button id="global-next-btn" class="nav-button">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+    </div>
+</div>
     <script src="script.js"></script>
 </body>
 

@@ -18,6 +18,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const compareButton = document.getElementById('compare-button');
     const detailActionButtonContainer = document.getElementById('detail-action-button-container');
 
+    // --- MODIFIED Comparison Modal ---
+    const comparisonModal = document.getElementById('comparison-modal');
+    const closeComparisonButton = document.getElementById('close-comparison-button');
+    const comparisonGrid = document.getElementById('comparison-grid');
+    const comparisonNavigation = document.getElementById('comparison-navigation');
+    const globalPrevBtn = document.getElementById('global-prev-btn');
+    const globalNextBtn = document.getElementById('global-next-btn');
+    const globalCounterCurrent = document.getElementById('global-image-counter-current');
+    const globalCounterTotal = document.getElementById('global-image-counter-total');
+
+    // --- NEW Global State for Comparison ---
+    let globalImageIndex = 0;
+    let maxImagesInQueue = 0;
+
+
     /**
      * A generic function to make calls to the REST API.
      */
@@ -181,22 +196,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (isVisible && isHidden) {
                 // --- Animate IN ---
-                // 1. Make the card take up space in the grid again.
                 card.style.display = '';
-                
-                // 2. Use a tiny delay to ensure the browser applies the display change
-                //    before we trigger the animation by removing the class.
                 setTimeout(() => {
                     card.classList.remove('hidden-by-filter');
                 }, 10);
 
             } else if (!isVisible && !isHidden) {
                 // --- Animate OUT ---
-                // 1. Add the class to trigger the fade-out and scale-down animation.
                 card.classList.add('hidden-by-filter');
-                
-                // 2. After the animation finishes, set display to 'none' 
-                //    to collapse the space in the grid.
                 setTimeout(() => {
                     card.style.display = 'none';
                 }, transitionDuration);
@@ -268,9 +275,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Queue UI and Logic ---
 
-    /**
-     * Syncs the visual state of album cards in the grid with the queue.
-     */
     function updateGridQueueStyles() {
         const queuedIds = new Set(queue.map(album => album._id));
         albumCache.forEach(cachedAlbum => {
@@ -282,9 +286,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    /**
-     * Updates the floating queue button's visibility, count, and animates it.
-     */
     function updateQueueButton() {
         const oldLength = parseInt(queueCount.textContent, 10);
         const newLength = queue.length;
@@ -295,22 +296,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             queueButton.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
         } else {
             queueButton.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
-            closeQueueMenu(); // Close menu if queue becomes empty
+            closeQueueMenu();
         }
 
-        // Animate the button only if the count has changed.
         if (oldLength !== newLength) {
             queueButton.classList.add('animate-queue-button');
-            // Remove the class after the animation completes to allow it to be re-triggered.
             setTimeout(() => {
                 queueButton.classList.remove('animate-queue-button');
-            }, 400); // Must match the animation duration in CSS
+            }, 400);
         }
     }
 
-    /**
-     * Renders the list of albums inside the queue menu.
-     */
     function renderQueueList() {
         queueList.innerHTML = '';
         if (queue.length === 0) {
@@ -321,7 +317,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         queue.forEach(album => {
             const item = document.createElement('div');
             item.className = 'flex items-center justify-between bg-gray-100 dark:bg-gray-700/50 p-3 rounded-lg';
-            // Use data-id instead of data-title
             item.innerHTML = `
                 <span class="font-medium truncate pr-4">${album.title}</span>
                 <button data-id="${album._id}" class="remove-from-queue-btn flex-shrink-0 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
@@ -331,7 +326,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             queueList.appendChild(item);
         });
 
-        // Re-attach event listeners to use the new data-id
         document.querySelectorAll('.remove-from-queue-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 removeFromQueue(btn.dataset.id);
@@ -339,11 +333,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    /**
-     * Adds an album to the queue and updates the UI.
-     */
     function addToQueue(albumData) {
-        // Check for ID instead of title
         if (!queue.some(item => item._id === albumData._id)) {
             queue.push(albumData);
             updateQueueButton();
@@ -353,11 +343,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    /**
-     * Removes an album from the queue and updates the UI.
-     */
-    function removeFromQueue(albumId) { // Parameter changed from albumTitle to albumId
-        // Filter by ID instead of title
+    function removeFromQueue(albumId) {
         queue = queue.filter(item => item._id !== albumId);
         updateQueueButton();
         renderQueueList();
@@ -365,41 +351,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateGridQueueStyles();
     }
 
-    /**
-     * Opens the queue menu.
-     */
     function openQueueMenu() {
         renderQueueList();
         queueMenuOverlay.classList.remove('opacity-0', 'pointer-events-none');
         queueMenuOverlay.querySelector('div').classList.remove('scale-95');
     }
 
-    /**
-     * Closes the queue menu.
-     */
     function closeQueueMenu() {
         queueMenuOverlay.classList.add('opacity-0');
         queueMenuOverlay.querySelector('div').classList.add('scale-95');
         setTimeout(() => queueMenuOverlay.classList.add('pointer-events-none'), 300);
     }
 
-    /**
-     * Updates the add/remove button in the album detail view based on queue status.
-     */
     function updateDetailActionButton() {
         if (!currentlyOpenCard) return;
 
-        const id = currentlyOpenCard.dataset.id; // Get ID from the card
-        const isInQueue = queue.some(item => item._id === id); // Check queue using ID
-        detailActionButtonContainer.innerHTML = ''; // Clear previous button
+        const id = currentlyOpenCard.dataset.id;
+        const isInQueue = queue.some(item => item._id === id);
+        detailActionButtonContainer.innerHTML = '';
 
         let button;
         if (isInQueue) {
             button = document.createElement('button');
             button.className = 'bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors h-full w-full flex items-center justify-center';
-            button.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>`; // Minus Icon
+            button.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>`;
             button.onclick = () => {
-                removeFromQueue(id); // Use ID to remove
+                removeFromQueue(id);
                 closeDetailView();
             };
         } else {
@@ -409,7 +386,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             button.style.fontSize = '2.5rem';
             button.style.lineHeight = '1';
             button.onclick = () => {
-                // Construct the album data object, including the ID
                 const albumData = {
                     _id: currentlyOpenCard.dataset.id,
                     title: currentlyOpenCard.dataset.title,
@@ -423,7 +399,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         detailActionButtonContainer.appendChild(button);
     }
 
-    // Event Listeners for Queue Menu
     queueButton.addEventListener('click', openQueueMenu);
     closeQueueMenuButton.addEventListener('click', closeQueueMenu);
     queueMenuOverlay.addEventListener('click', (e) => {
@@ -436,9 +411,110 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateDetailActionButton();
         updateGridQueueStyles();
     });
-    compareButton.addEventListener('click', () => {
-        // Functionality to be added later
-        alert('Compare functionality is not yet implemented.');
+    
+    function hideComparisonView() {
+        comparisonModal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    /**
+     * REWRITTEN: Shows the comparison view with global navigation.
+     */
+    function showComparisonView() {
+        if (queue.length < 2) {
+            alert("Please add at least two albums to the queue to compare.");
+            return;
+        }
+
+        globalImageIndex = 0; // Reset index
+        maxImagesInQueue = Math.max(0, ...queue.map(album => album.imageUrls.length));
+
+        // Hide navigation if no album has more than one image
+        if (maxImagesInQueue <= 1) {
+            comparisonNavigation.classList.add('hidden');
+        } else {
+            comparisonNavigation.classList.remove('hidden');
+        }
+
+        comparisonGrid.style.gridTemplateColumns = `repeat(${queue.length}, 1fr)`;
+        comparisonGrid.innerHTML = ''; // Clear previous content
+
+        queue.forEach((album, queueIndex) => {
+            const item = document.createElement('div');
+            item.className = 'comparison-item';
+            item.dataset.queueIndex = queueIndex;
+
+            const imageUrl = album.imageUrls.length > 0 ? album.imageUrls[0] : '';
+
+            item.innerHTML = `
+                <h3 class="text-lg font-bold text-center truncate text-white">${album.title}</h3>
+                <div class="image-container">
+                    <img src="${imageUrl}" title="${album.title}">
+                </div>
+            `;
+            comparisonGrid.appendChild(item);
+        });
+
+        updateGlobalCounter();
+        comparisonModal.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    /**
+     * NEW: Updates the global counter display and button states.
+     */
+    function updateGlobalCounter() {
+        if (maxImagesInQueue === 0) {
+            globalCounterCurrent.textContent = '0';
+            globalCounterTotal.textContent = '0';
+        } else {
+            globalCounterCurrent.textContent = globalImageIndex + 1;
+            globalCounterTotal.textContent = maxImagesInQueue;
+        }
+        globalPrevBtn.disabled = globalImageIndex === 0;
+        globalNextBtn.disabled = globalImageIndex >= maxImagesInQueue - 1;
+    }
+
+    /**
+     * NEW: Updates all images in the comparison grid to a new index.
+     */
+    function updateAllComparisonImages(newIndex) {
+        if (newIndex < 0 || newIndex >= maxImagesInQueue) {
+            return; // Do nothing if index is out of bounds
+        }
+
+        globalImageIndex = newIndex;
+
+        const comparisonItems = document.querySelectorAll('.comparison-item');
+        comparisonItems.forEach(item => {
+            const queueIndex = parseInt(item.dataset.queueIndex, 10);
+            const album = queue[queueIndex];
+
+            if (album.imageUrls.length > 0) {
+                // Use modulo to loop within an album's own images if it's shorter
+                const imageIndexForThisAlbum = globalImageIndex % album.imageUrls.length;
+                item.querySelector('img').src = album.imageUrls[imageIndexForThisAlbum];
+                //item.querySelector('.local-image-counter').textContent = imageIndexForThisAlbum + 1;
+            }
+        });
+
+        updateGlobalCounter();
+    }
+
+    // --- MODIFIED Event Listeners for Comparison Modal ---
+    compareButton.addEventListener('click', showComparisonView);
+    closeComparisonButton.addEventListener('click', hideComparisonView);
+    comparisonModal.addEventListener('click', (e) => {
+        if (e.target === comparisonModal) {
+            hideComparisonView();
+        }
+    });
+
+    // NEW event listeners for global navigation
+    globalNextBtn.addEventListener('click', () => {
+        updateAllComparisonImages(globalImageIndex + 1);
+    });
+
+    globalPrevBtn.addEventListener('click', () => {
+        updateAllComparisonImages(globalImageIndex - 1);
     });
 
     // --- Popup Menu & Settings Logic ---
@@ -528,9 +604,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         popupMenu.classList.remove('hidden');
     });
 
-    /**
-     * A simple client-side check for common image file extensions.
-     */
     function isValidImageUrl(url) {
         return /\.(jpeg|jpg|gif|png|webp)$/i.test(url);
     }
@@ -607,13 +680,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         createDescInput.value = '';
         createUrlsInput.value = '';
         createAlbumMessage.textContent = '';
-        createAlbumMessage.className = 'text-sm mt-2 text-center h-4'; // Resets color
+        createAlbumMessage.className = 'text-sm mt-2 text-center h-4';
     });
 
-    /**
-     * Validates credentials by checking for either a successful response 
-     * or the specific "No sub field found" error, which implies successful authentication.
-     */
     async function validateCredentials(key, url) {
         try {
             await apiCall(key, url, '?metafields=count', 'GET');
@@ -686,9 +755,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         detailBackdrop.classList.remove('expanded');
         currentlyOpenCard.classList.remove('ring-2', 'ring-indigo-500', 'ring-offset-2', 'dark:ring-offset-gray-900');
         currentlyOpenCard = null;
-
-        // ADD THIS LINE
-        detailActionButtonContainer.innerHTML = ''; // Clear the button when view is closed
+        detailActionButtonContainer.innerHTML = '';
     };
 
     function handleCardClick(card) {
@@ -737,8 +804,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         lazyLoadDetailImages();
-
-        // ADD THIS LINE at the end of the function
         updateDetailActionButton();
 
         detailContainer.classList.add('expanded');
