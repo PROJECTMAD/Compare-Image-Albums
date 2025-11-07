@@ -30,11 +30,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const response = await fetch(fullUrl, options);
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                const errorData = await response.json().catch(() => ({
+                    message: response.statusText
+                }));
                 throw new Error(`API Error: ${response.status} - ${errorData.message || 'Unknown error'}`);
             }
-            // If the response is successful, we return the JSON body.
-            // For validation, we only care that this call doesn't throw an error.
             return await response.json();
         } catch (error) {
             console.error('API Call Failed:', error);
@@ -137,7 +137,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         observer.unobserve(img);
                     }
                 });
-            }, { root: albumsGrid, rootMargin: '100px 0px', threshold: 0.01 });
+            }, {
+                root: albumsGrid,
+                rootMargin: '100px 0px',
+                threshold: 0.01
+            });
             lazyImages.forEach(img => imageObserver.observe(img));
         } else {
             lazyImages.forEach(img => {
@@ -194,19 +198,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     const menuOverlay = document.getElementById('popup-menu-overlay');
     const popupMenuContainer = menuOverlay.querySelector('div');
     const popupMenu = document.getElementById('popup-menu');
+
+    // Settings View Elements
     const settingsView = document.getElementById('settings-view');
     const settingsButton = document.getElementById('settings-button');
     const backToMenuButton = document.getElementById('back-to-menu-button');
     const saveSettingsButton = document.getElementById('save-settings-button');
+    const clearSettingsButton = document.getElementById('clear-settings-button');
     const apiKeyInput = document.getElementById('api-key-input');
     const dbUrlInput = document.getElementById('db-url-input');
     const settingsError = document.getElementById('settings-error');
 
+    // Create Album View Elements
+    const createAlbumView = document.getElementById('create-album-view');
+    const createAlbumMenuButton = document.getElementById('create-album-menu-button');
+    const backToMenuFromCreateButton = document.getElementById('back-to-menu-from-create-button');
+    const submitAlbumButton = document.getElementById('submit-album-button');
+    const createTitleInput = document.getElementById('create-title-input');
+    const createDescInput = document.getElementById('create-desc-input');
+    const createUrlsInput = document.getElementById('create-urls-input');
+    const createAlbumMessage = document.getElementById('create-album-message');
+    const clearAlbumFormButton = document.getElementById('clear-album-form-button');
+
     const openMenu = () => {
-        apiKeyInput.value = localStorage.getItem('API_KEY') || '';
-        dbUrlInput.value = localStorage.getItem('DB_URL') || '';
         popupMenu.classList.remove('hidden');
         settingsView.classList.add('hidden');
+        createAlbumView.classList.add('hidden');
+
+        apiKeyInput.value = localStorage.getItem('API_KEY') || '';
+        dbUrlInput.value = localStorage.getItem('DB_URL') || '';
         backToMenuButton.classList.remove('hidden');
         menuOverlay.classList.remove('pointer-events-none', 'opacity-0');
         popupMenuContainer.classList.add('scale-100');
@@ -238,6 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     settingsButton.addEventListener('click', (e) => {
         e.preventDefault();
         popupMenu.classList.add('hidden');
+        createAlbumView.classList.add('hidden');
         settingsView.classList.remove('hidden');
     });
 
@@ -246,27 +267,114 @@ document.addEventListener('DOMContentLoaded', async () => {
         popupMenu.classList.remove('hidden');
     });
 
+    createAlbumMenuButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        popupMenu.classList.add('hidden');
+        settingsView.classList.add('hidden');
+        createAlbumView.classList.remove('hidden');
+    });
+
+    backToMenuFromCreateButton.addEventListener('click', () => {
+        createAlbumView.classList.add('hidden');
+        popupMenu.classList.remove('hidden');
+    });
+
+    /**
+     * A simple client-side check for common image file extensions.
+     */
+    function isValidImageUrl(url) {
+        return /\.(jpeg|jpg|gif|png|webp)$/i.test(url);
+    }
+
+    submitAlbumButton.addEventListener('click', async () => {
+        const title = createTitleInput.value.trim();
+        const description = createDescInput.value.trim();
+        const urlsRaw = createUrlsInput.value.trim();
+
+        createAlbumMessage.textContent = '';
+        createAlbumMessage.className = 'text-sm mt-2 text-center h-4';
+
+        if (!title) {
+            createAlbumMessage.textContent = 'Title is required.';
+            createAlbumMessage.classList.add('text-red-500');
+            return;
+        }
+
+        const imageUrls = urlsRaw.split('\n')
+            .map(url => url.trim().replace(/^http:\/\//i, 'https://'))
+            .filter(url => url);
+
+        if (imageUrls.length === 0) {
+            createAlbumMessage.textContent = 'At least one image URL is required.';
+            createAlbumMessage.classList.add('text-red-500');
+            return;
+        }
+
+        const invalidUrls = imageUrls.filter(url => !isValidImageUrl(url));
+        if (invalidUrls.length > 0) {
+            createAlbumMessage.textContent = `Invalid URL format: ${invalidUrls[0]}`;
+            createAlbumMessage.classList.add('text-red-500');
+            return;
+        }
+
+        submitAlbumButton.disabled = true;
+        submitAlbumButton.textContent = 'Creating...';
+
+        const newAlbumData = {
+            title,
+            description,
+            imageUrls
+        };
+
+        try {
+            await apiCall(API_KEY, DB_URL, '', 'POST', newAlbumData);
+
+            createAlbumMessage.textContent = 'Album created successfully!';
+            createAlbumMessage.classList.add('text-green-500');
+
+            createTitleInput.value = '';
+            createDescInput.value = '';
+            createUrlsInput.value = '';
+
+            setTimeout(async () => {
+                closeMenu();
+                await fetchAndDisplayAlbums();
+            }, 1500);
+
+        } catch (error) {
+            createAlbumMessage.textContent = 'Failed to create album. Check console.';
+            createAlbumMessage.classList.add('text-red-500');
+            console.error('Failed to create album:', error);
+        } finally {
+            setTimeout(() => {
+                submitAlbumButton.disabled = false;
+                submitAlbumButton.textContent = 'Create Album';
+            }, 500);
+        }
+    });
+
+    clearAlbumFormButton.addEventListener('click', () => {
+        createTitleInput.value = '';
+        createDescInput.value = '';
+        createUrlsInput.value = '';
+        createAlbumMessage.textContent = '';
+        createAlbumMessage.className = 'text-sm mt-2 text-center h-4'; // Resets color
+    });
+
     /**
      * Validates credentials by checking for either a successful response 
      * or the specific "No sub field found" error, which implies successful authentication.
      */
     async function validateCredentials(key, url) {
         try {
-            // Attempt the API call as before.
             await apiCall(key, url, '?metafields=count', 'GET');
-            // If the call succeeds without an error (e.g., a 200 OK response), credentials are valid.
             return true;
         } catch (error) {
-            // The API call failed. Now we check if it's our "successful failure".
             console.warn("Validation API call threw an error, checking if it's the expected one:", error.message);
-
-            // If the error message contains this specific text, it means authentication passed.
             if (error.message && error.message.includes("No sub field found")) {
                 console.log("Validation successful: Received expected 'No sub field found' error.");
                 return true;
             }
-
-            // If it's any other error (like 401 Unauthorized, network failure), it's a real failure.
             console.error("Credential validation failed with an unexpected error:", error);
             return false;
         }
@@ -306,6 +414,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             saveSettingsButton.disabled = false;
             saveSettingsButton.textContent = 'Save';
         }
+    });
+
+    clearSettingsButton.addEventListener('click', () => {
+        apiKeyInput.value = '';
+        dbUrlInput.value = '';
+        settingsError.textContent = '';
     });
 
     menuButton.addEventListener('click', openMenu);

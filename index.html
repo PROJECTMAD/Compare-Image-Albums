@@ -42,8 +42,9 @@
                         </button>
                     </div>
                     <nav class="flex flex-col space-y-2">
-                        <a href="#"
-                            class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Albums</a>
+                        <a href="#" id="create-album-menu-button"
+                            class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Create
+                            Album</a>
                         <a href="#" id="settings-button"
                             class="album-title text-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">Settings</a>
                     </nav>
@@ -80,7 +81,57 @@
                         </div>
                         <button id="save-settings-button"
                             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50">Save</button>
+                        <button id="clear-settings-button" type="button"
+                            class="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg transition-colors">Clear</button>
+
                         <p id="settings-error" class="text-red-500 text-sm mt-2 text-center h-4"></p>
+                    </div>
+                </div>
+            </div>
+            <!-- Create Album View -->
+            <div id="create-album-view" class="hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Create New Album</h2>
+                        <button id="back-to-menu-from-create-button"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="space-y-4 text-left">
+                        <div>
+                            <label for="create-title-input"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                            <input type="text" id="create-title-input"
+                                class="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="">
+                        </div>
+                        <div>
+                            <label for="create-desc-input"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                            <textarea id="create-desc-input" rows="3"
+                                class="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder=""></textarea>
+                        </div>
+                        <div>
+                            <label for="create-urls-input"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URLs
+                                (one per line)</label>
+                            <textarea id="create-urls-input" rows="4"
+                                class="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="https://.../image1.jpg&#10;https://.../image2.png"></textarea>
+                        </div>
+                        <button id="submit-album-button"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50">Create
+                            Album</button>
+                        <button id="clear-album-form-button" type="button"
+                            class="w-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg transition-colors">Clear</button>
+
+                        <p id="create-album-message" class="text-sm mt-2 text-center h-4"></p>
                     </div>
                 </div>
             </div>
@@ -169,7 +220,7 @@
         </div>
     </main>
 
-     <script src="script.js"></script> 
+    <script src="script.js"></script>
 </body>
 
 </html>
