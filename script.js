@@ -536,10 +536,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Track current loading index to prevent mixing images from fast navigation
     let currentLoadingIndex = 0;
+    const minSkeletonDisplayTime = 150; // Minimum time to show skeleton (ms)
 
     /**
      * NEW: Updates all images in the comparison grid to a new index.
      * Enhanced to show skeleton loaders during image transitions and prevent image mixing.
+     * Fixed race condition where cached images load too fast to show skeleton.
      */
     function updateAllComparisonImages(newIndex) {
         if (newIndex < 0 || newIndex >= maxImagesInQueue) {
@@ -568,9 +570,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     imageContainer.insertBefore(skeleton, img);
                 }
                 
-                // Fade out current image
+                // Record when we started showing the skeleton
+                const skeletonShowTime = Date.now();
+                
+                // Fade out current image and show skeleton immediately
                 img.classList.remove('loaded');
                 skeleton.style.display = 'block';
+                skeleton.style.opacity = '1';
                 
                 // Update image source
                 const newImageUrl = album.imageUrls[imageIndexForThisAlbum];
@@ -578,27 +584,59 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // Load new image with validation to prevent mixing
                 const tempImg = new Image();
-                tempImg.onload = () => {
+                
+                const completeImageLoad = () => {
                     // Only apply the image if this is still the current navigation request
-                    if (thisLoadingIndex === currentLoadingIndex) {
-                        img.src = newImageUrl;
-                        img.classList.add('loaded');
-                        setTimeout(() => {
-                            if (skeleton && thisLoadingIndex === currentLoadingIndex) {
-                                skeleton.style.display = 'none';
-                            }
-                        }, 400);
+                    if (thisLoadingIndex !== currentLoadingIndex) {
+                        return; // Abort if a newer request has been made
                     }
+                    
+                    // Calculate how long the skeleton has been visible
+                    const skeletonDisplayDuration = Date.now() - skeletonShowTime;
+                    const remainingTime = Math.max(0, minSkeletonDisplayTime - skeletonDisplayDuration);
+                    
+                    // Ensure skeleton shows for minimum time to prevent flickering
+                    setTimeout(() => {
+                        if (thisLoadingIndex === currentLoadingIndex) {
+                            img.src = newImageUrl;
+                            
+                            // Wait a tiny bit for the image to actually render
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    if (thisLoadingIndex === currentLoadingIndex) {
+                                        img.classList.add('loaded');
+                                        
+                                        // Hide skeleton after fade-in completes
+                                        setTimeout(() => {
+                                            if (skeleton && thisLoadingIndex === currentLoadingIndex) {
+                                                skeleton.style.display = 'none';
+                                            }
+                                        }, 400);
+                                    }
+                                });
+                            });
+                        }
+                    }, remainingTime);
                 };
+                
+                tempImg.onload = completeImageLoad;
                 tempImg.onerror = () => {
                     // Hide skeleton even on error, but only if this is the current request
                     if (thisLoadingIndex === currentLoadingIndex) {
-                        img.classList.add('loaded');
-                        if (skeleton) {
-                            skeleton.style.display = 'none';
-                        }
+                        const skeletonDisplayDuration = Date.now() - skeletonShowTime;
+                        const remainingTime = Math.max(0, minSkeletonDisplayTime - skeletonDisplayDuration);
+                        
+                        setTimeout(() => {
+                            if (thisLoadingIndex === currentLoadingIndex) {
+                                img.classList.add('loaded');
+                                if (skeleton) {
+                                    skeleton.style.display = 'none';
+                                }
+                            }
+                        }, remainingTime);
                     }
                 };
+                
                 tempImg.src = newImageUrl;
             }
         });
