@@ -1013,7 +1013,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /**
      * REWRITTEN: Shows the comparison view with a dynamic flexbox layout.
-     * Enhanced with skeleton loaders and lazy loading.
+     * Enhanced with skeleton loaders and an initial loading state that blocks navigation until ready.
+     * Also respects the globalImageIndex for starting at a specific page from a shared URL.
      */
     function showComparisonView() {
         if (queue.length < 2) {
@@ -1021,47 +1022,76 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        globalImageIndex = 0; // Reset index
-        maxImagesInQueue = Math.max(0, ...queue.map(album => album.imageUrls.length));
-        
-        // Reset loading state and navigation
-        isLoadingImages = false;
+        // Set initial state and disable navigation until images are loaded
+        isLoadingImages = true;
+        setNavigationEnabled(false);
         currentLoadingIndex = 0;
 
-        // Hide navigation if no album has more than one image
-        // if (maxImagesInQueue <= 1) {
-        //     comparisonNavigation.classList.add('hidden');
-        // } else {
-        //     comparisonNavigation.classList.remove('hidden');
-        // }
+        maxImagesInQueue = Math.max(0, ...queue.map(album => album.imageUrls.length));
 
-        // Clear previous content and remove any old inline styles
         comparisonGrid.innerHTML = '';
         comparisonGrid.removeAttribute('style');
+
+        let imagesToLoad = queue.length;
+        let imagesLoaded = 0;
+
+        // Callback to run after each image finishes loading (or fails)
+        const onImageDone = () => {
+            imagesLoaded++;
+            if (imagesLoaded >= imagesToLoad) {
+                isLoadingImages = false;
+                // Enable navigation only after all initial images are loaded
+                setNavigationEnabled(true);
+            }
+        };
 
         queue.forEach((album, queueIndex) => {
             const item = document.createElement('div');
             item.className = 'comparison-item';
             item.dataset.queueIndex = queueIndex;
 
-            const imageUrl = album.imageUrls.length > 0 ? album.imageUrls[0] : '';
+            // Determine the correct starting image URL based on globalImageIndex (for shared URLs)
+            const imageIndexForThisAlbum = album.imageUrls.length > 0 ? globalImageIndex % album.imageUrls.length : 0;
+            const imageUrl = album.imageUrls.length > 0 ? album.imageUrls[imageIndexForThisAlbum] : '';
 
             item.innerHTML = `
                 <div class="image-container">
                     <div class="comparison-skeleton-loader"></div>
-                    <img data-src="${imageUrl}" class="comparison-lazy-image" title="${album.title}">
+                    <img data-src="${imageUrl}" class="comparison-lazy-image" title="${escapeHtml(album.title)}">
                 </div>
             `;
             comparisonGrid.appendChild(item);
 
+            const img = item.querySelector('.comparison-lazy-image');
+            const skeleton = item.querySelector('.comparison-skeleton-loader');
+
+            img.onload = () => {
+                img.classList.add('loaded');
+                if (skeleton) {
+                    setTimeout(() => {
+                        skeleton.style.display = 'none';
+                    }, 400);
+                }
+                onImageDone();
+            };
+
+            img.onerror = () => {
+                // Handle error but still count as "done" to unblock navigation
+                if (skeleton) {
+                    skeleton.style.display = 'none';
+                }
+                onImageDone();
+            };
+
+            // Start loading the image
+            img.src = imageUrl;
+
             // Add hover event listener to load metadata on demand
             const imageContainer = item.querySelector('.image-container');
             item.metadataLoaded = false;
-            
             item.addEventListener('mouseenter', () => {
                 if (!item.metadataLoaded) {
-                    const currentImg = imageContainer.querySelector('img');
-                    const currentImageUrl = currentImg ? currentImg.dataset.src : '';
+                    const currentImageUrl = item.querySelector('img')?.dataset.src;
                     if (currentImageUrl) {
                         item.metadataLoaded = true;
                         loadMetadataForImage(imageContainer, currentImageUrl);
@@ -1070,11 +1100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        // Initialize lazy loading for comparison images
-        lazyLoadComparisonImages();
-
         updateGlobalCounter();
-        setNavigationEnabled(true); // Ensure navigation buttons are properly enabled
         comparisonModal.classList.remove('opacity-0', 'pointer-events-none');
     }
 
@@ -1266,7 +1292,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- MODIFIED Event Listeners for Comparison Modal ---
-    compareButton.addEventListener('click', showComparisonView);
+    compareButton.addEventListener('click', () => {
+        globalImageIndex = 0; // Explicitly reset for new comparisons
+        showComparisonView();
+    });
     closeComparisonButton.addEventListener('click', hideComparisonView);
     comparisonModal.addEventListener('click', (e) => {
         if (e.target === comparisonModal) {
