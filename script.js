@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let globalImageIndex = 0;
     let maxImagesInQueue = 0;
 
+    // --- URL Sharing State ---
+    let isLoadingFromSharedUrl = false;
+
 
     /**
      * A generic function to make calls to the REST API.
@@ -534,6 +537,228 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
+     * Generates a shareable URL for the current comparison state
+     */
+    function generateShareableUrl() {
+        const shareData = {
+            db: DB_URL,
+            albums: queue.map(album => album._id),
+            page: globalImageIndex
+        };
+        
+        // Encode to Base64 for compact URL
+        const encoded = btoa(JSON.stringify(shareData));
+        const baseUrl = window.location.origin + window.location.pathname;
+        return `${baseUrl}?compare=${encodeURIComponent(encoded)}`;
+    }
+
+    /**
+     * Copies the shareable URL to clipboard
+     */
+    async function shareComparison() {
+        try {
+            const shareUrl = generateShareableUrl();
+            await navigator.clipboard.writeText(shareUrl);
+            
+            // Show success feedback
+            const shareBtn = document.getElementById('share-comparison-btn');
+            const originalContent = shareBtn.innerHTML;
+            shareBtn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Copied!</span>
+            `;
+            shareBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            shareBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            
+            setTimeout(() => {
+                shareBtn.innerHTML = originalContent;
+                shareBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                shareBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            }, 2000);
+        } catch (error) {
+            console.error('Failed to share comparison:', error);
+            alert('Failed to copy share link. Please try again.');
+        }
+    }
+
+    /**
+     * Parses shared comparison URL parameters
+     */
+    function parseSharedUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const compareParam = urlParams.get('compare');
+        
+        if (!compareParam) {
+            return null;
+        }
+        
+        try {
+            const decoded = atob(decodeURIComponent(compareParam));
+            const shareData = JSON.parse(decoded);
+            
+            // Validate structure
+            if (!shareData.db || !Array.isArray(shareData.albums) || shareData.albums.length < 2) {
+                throw new Error('Invalid share data structure');
+            }
+            
+            return shareData;
+        } catch (error) {
+            console.error('Failed to parse shared URL:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Displays an error notification to the user
+     */
+    function showNotification(message, type = 'error') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-lg shadow-2xl transition-all duration-300 ${
+            type === 'error' 
+                ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white' 
+                : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
+        } animate-slide-down`;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${type === 'error' 
+                        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+                        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+                    }
+                </svg>
+                <span class="font-medium">${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translate(-50%, -100%)';
+            setTimeout(() => notification.remove(), 300);
+        }, 4000);
+    }
+
+    /**
+     * Loads a shared comparison from URL
+     */
+    async function loadSharedComparison() {
+        const shareData = parseSharedUrl();
+        
+        if (!shareData) {
+            return; // No shared URL, continue normal operation
+        }
+        
+        isLoadingFromSharedUrl = true;
+        
+        // Check if DB endpoint matches
+        if (shareData.db !== DB_URL) {
+            const userConfirm = confirm(
+                `This comparison was shared from a different database.\n\n` +
+                `Shared DB: ${shareData.db}\n` +
+                `Current DB: ${DB_URL || '(not configured)'}\n\n` +
+                `Would you like to update your settings to match the shared database?`
+            );
+            
+            if (userConfirm) {
+                // Update settings and prompt user to save
+                dbUrlInput.value = shareData.db;
+                
+                // Open settings menu
+                menuOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                popupMenuContainer.classList.remove('scale-95');
+                popupMenu.classList.add('hidden');
+                settingsView.classList.remove('hidden');
+                
+                showNotification('Please save the database settings to view the shared comparison.', 'error');
+                isLoadingFromSharedUrl = false;
+                return;
+            } else {
+                showNotification('Shared comparison not loaded - database endpoint mismatch.', 'error');
+                // Clear URL parameter
+                window.history.replaceState({}, document.title, window.location.pathname);
+                isLoadingFromSharedUrl = false;
+                return;
+            }
+        }
+        
+        // Check if we have valid credentials
+        if (!API_KEY || !DB_URL) {
+            showNotification('Please configure your API credentials in settings first.', 'error');
+            menuOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            popupMenuContainer.classList.remove('scale-95');
+            popupMenu.classList.add('hidden');
+            settingsView.classList.remove('hidden');
+            isLoadingFromSharedUrl = false;
+            return;
+        }
+        
+        // Fetch albums and validate they exist
+        try {
+            showNotification('Loading shared comparison...', 'success');
+            
+            const albums = await apiCall(API_KEY, DB_URL);
+            const albumMap = new Map(albums.map(album => [album._id, album]));
+            
+            // Check which albums are available
+            const availableAlbums = [];
+            const missingAlbums = [];
+            
+            for (const albumId of shareData.albums) {
+                if (albumMap.has(albumId)) {
+                    availableAlbums.push(albumMap.get(albumId));
+                } else {
+                    missingAlbums.push(albumId);
+                }
+            }
+            
+            if (availableAlbums.length < 2) {
+                showNotification(
+                    `Cannot load comparison: ${missingAlbums.length} album(s) not found in database.`,
+                    'error'
+                );
+                window.history.replaceState({}, document.title, window.location.pathname);
+                isLoadingFromSharedUrl = false;
+                return;
+            }
+            
+            // Warn about missing albums but continue
+            if (missingAlbums.length > 0) {
+                showNotification(
+                    `${missingAlbums.length} album(s) from the shared comparison are not available.`,
+                    'error'
+                );
+            }
+            
+            // Clear current queue and populate with shared albums
+            queue = availableAlbums;
+            updateQueueButton();
+            updateGridQueueStyles();
+            
+            // Set the global image index
+            globalImageIndex = shareData.page || 0;
+            
+            // Show comparison view
+            setTimeout(() => {
+                showComparisonView();
+                showNotification('Shared comparison loaded successfully!', 'success');
+                isLoadingFromSharedUrl = false;
+                
+                // Clear URL parameter to avoid reloading on refresh
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 500);
+            
+        } catch (error) {
+            console.error('Failed to load shared comparison:', error);
+            showNotification('Failed to load shared comparison. Please check your connection.', 'error');
+            window.history.replaceState({}, document.title, window.location.pathname);
+            isLoadingFromSharedUrl = false;
+        }
+    }
+
+    /**
      * Escapes HTML special characters to prevent XSS.
      */
     function escapeHtml(text) {
@@ -1025,6 +1250,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateAllComparisonImages(globalImageIndex - 1);
     });
 
+    // Share button event listener
+    const shareComparisonBtn = document.getElementById('share-comparison-btn');
+    if (shareComparisonBtn) {
+        shareComparisonBtn.addEventListener('click', shareComparison);
+    }
+
     // Keyboard navigation for Comparison Viewer
     document.addEventListener('keydown', (e) => {
         // Only handle keyboard events when comparison modal is visible
@@ -1350,4 +1581,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         await fetchAndDisplayAlbums();
     }
+    
+    // Load shared comparison if URL parameter exists
+    await loadSharedComparison();
 });

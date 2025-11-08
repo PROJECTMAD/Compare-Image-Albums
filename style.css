@@ -437,6 +437,7 @@
     aspect-ratio: 1 / 1.46;
     margin: 1rem;
     padding: 1rem;
+    min-height: 90vh;
     height: auto;
 }
 
