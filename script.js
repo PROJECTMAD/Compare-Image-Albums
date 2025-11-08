@@ -611,33 +611,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
-     * Displays an error notification to the user
+     * App-blocking overlay for seamless status messages
      */
-    function showNotification(message, type = 'error') {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-4 rounded-lg shadow-2xl transition-all duration-300 ${
-            type === 'error' 
-                ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white' 
-                : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-        } animate-slide-down`;
-        notification.innerHTML = `
-            <div class="flex items-center space-x-3">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    ${type === 'error' 
-                        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
-                        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
-                    }
-                </svg>
-                <span class="font-medium">${message}</span>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
+    function showBlockingOverlay(message = 'Loading…') {
+        const overlay = document.getElementById('app-blocking-overlay');
+        const msg = document.getElementById('overlay-message');
+        if (!overlay || !msg) return;
+        msg.textContent = message;
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function updateBlockingOverlay(message) {
+        const msg = document.getElementById('overlay-message');
+        if (msg) msg.textContent = message;
+    }
+
+    function hideBlockingOverlay() {
+        const overlay = document.getElementById('app-blocking-overlay');
+        if (!overlay) return;
+        overlay.classList.add('opacity-0');
+        overlay.classList.add('pointer-events-none');
+    }
+
+    /**
+     * Toast notifications for errors/warnings/info (non-blocking)
+     */
+    function showToast(message, type = 'error') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        const base = 'px-4 py-3 rounded-lg shadow-lg text-white flex items-center gap-2 backdrop-blur-md border';
+        const color = type === 'success' ? 'bg-green-600/90 border-green-400/40' : type === 'warning' ? 'bg-yellow-600/90 border-yellow-400/40' : 'bg-red-600/90 border-red-400/40';
+        toast.className = `${base} ${color}`;
+        toast.innerHTML = `<span>${message}</span>`;
+        container.appendChild(toast);
         setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translate(-50%, -100%)';
-            setTimeout(() => notification.remove(), 300);
+            toast.classList.add('opacity-0');
+            setTimeout(() => toast.remove(), 300);
         }, 4000);
     }
 
@@ -645,60 +655,89 @@ document.addEventListener('DOMContentLoaded', async () => {
      * Loads a shared comparison from URL
      */
     async function loadSharedComparison() {
-        const shareData = parseSharedUrl();
+        const shareData = (() => {
+            const params = new URLSearchParams(window.location.search);
+            if (!params.get('compare')) return null;
+            showBlockingOverlay('Deciphering URL parameters…');
+            const parsed = parseSharedUrl();
+            if (!parsed) {
+                hideBlockingOverlay();
+                showToast('Invalid or corrupted shared URL.', 'error');
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return null;
+            }
+            return parsed;
+        })();
         
         if (!shareData) {
-            return; // No shared URL, continue normal operation
+            return; // No valid shared URL, continue normal operation
         }
         
         isLoadingFromSharedUrl = true;
         
         // Check if DB endpoint matches
+        updateBlockingOverlay('Validating database endpoint…');
         if (shareData.db !== DB_URL) {
-            const userConfirm = confirm(
-                `This comparison was shared from a different database.\n\n` +
-                `Shared DB: ${shareData.db}\n` +
-                `Current DB: ${DB_URL || '(not configured)'}\n\n` +
-                `Would you like to update your settings to match the shared database?`
-            );
+            hideBlockingOverlay();
+            showToast('Shared comparison uses a different database endpoint. Opening settings…', 'error');
             
-            if (userConfirm) {
-                // Update settings and prompt user to save
-                dbUrlInput.value = shareData.db;
-                
-                // Open settings menu
+            // Get menu elements and open settings
+            const dbUrlInput = document.getElementById('db-url-input');
+            const menuOverlay = document.getElementById('popup-menu-overlay');
+            const popupMenuContainer = menuOverlay ? menuOverlay.querySelector('div') : null;
+            const popupMenu = document.getElementById('popup-menu');
+            const settingsView = document.getElementById('settings-view');
+            
+            // Pre-fill the database URL
+            if (dbUrlInput) dbUrlInput.value = shareData.db;
+            
+            // Open settings menu
+            if (menuOverlay && popupMenuContainer && popupMenu && settingsView) {
                 menuOverlay.classList.remove('opacity-0', 'pointer-events-none');
                 popupMenuContainer.classList.remove('scale-95');
                 popupMenu.classList.add('hidden');
                 settingsView.classList.remove('hidden');
-                
-                showNotification('Please save the database settings to view the shared comparison.', 'error');
-                isLoadingFromSharedUrl = false;
-                return;
-            } else {
-                showNotification('Shared comparison not loaded - database endpoint mismatch.', 'error');
-                // Clear URL parameter
-                window.history.replaceState({}, document.title, window.location.pathname);
-                isLoadingFromSharedUrl = false;
-                return;
             }
+            
+            isLoadingFromSharedUrl = false;
+            
+            // Store the share data in sessionStorage to retry after settings are saved
+            sessionStorage.setItem('pendingSharedComparison', JSON.stringify(shareData));
+            return;
         }
         
         // Check if we have valid credentials
         if (!API_KEY || !DB_URL) {
-            showNotification('Please configure your API credentials in settings first.', 'error');
-            menuOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            popupMenuContainer.classList.remove('scale-95');
-            popupMenu.classList.add('hidden');
-            settingsView.classList.remove('hidden');
+            hideBlockingOverlay();
+            showToast('Please configure your API credentials in settings first.', 'error');
+            
+            // Get menu elements
+            const menuOverlay = document.getElementById('popup-menu-overlay');
+            const popupMenuContainer = menuOverlay ? menuOverlay.querySelector('div') : null;
+            const popupMenu = document.getElementById('popup-menu');
+            const settingsView = document.getElementById('settings-view');
+            
+            // Open settings menu
+            if (menuOverlay && popupMenuContainer && popupMenu && settingsView) {
+                menuOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                popupMenuContainer.classList.remove('scale-95');
+                popupMenu.classList.add('hidden');
+                settingsView.classList.remove('hidden');
+            }
+            
             isLoadingFromSharedUrl = false;
+            
+            // Store the share data to retry after settings are saved
+            sessionStorage.setItem('pendingSharedComparison', JSON.stringify(shareData));
             return;
         }
         
+        // Show loading status
+        updateBlockingOverlay('Loading albums…');
+        
         // Fetch albums and validate they exist
         try {
-            showNotification('Loading shared comparison...', 'success');
-            
             const albums = await apiCall(API_KEY, DB_URL);
             const albumMap = new Map(albums.map(album => [album._id, album]));
             
@@ -715,10 +754,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             if (availableAlbums.length < 2) {
-                showNotification(
-                    `Cannot load comparison: ${missingAlbums.length} album(s) not found in database.`,
-                    'error'
-                );
+                hideBlockingOverlay();
+                showToast(`Cannot load comparison: ${missingAlbums.length} album(s) not found in database.`, 'error');
                 window.history.replaceState({}, document.title, window.location.pathname);
                 isLoadingFromSharedUrl = false;
                 return;
@@ -726,10 +763,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Warn about missing albums but continue
             if (missingAlbums.length > 0) {
-                showNotification(
-                    `${missingAlbums.length} album(s) from the shared comparison are not available.`,
-                    'error'
-                );
+                showToast(`Warning: ${missingAlbums.length} album(s) from the shared comparison are not available.`, 'warning');
             }
             
             // Clear current queue and populate with shared albums
@@ -741,18 +775,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             globalImageIndex = shareData.page || 0;
             
             // Show comparison view
-            setTimeout(() => {
-                showComparisonView();
-                showNotification('Shared comparison loaded successfully!', 'success');
-                isLoadingFromSharedUrl = false;
-                
-                // Clear URL parameter to avoid reloading on refresh
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }, 500);
+            hideBlockingOverlay();
+            showComparisonView();
+            isLoadingFromSharedUrl = false;
+            
+            // Clear URL parameter to avoid reloading on refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
             
         } catch (error) {
             console.error('Failed to load shared comparison:', error);
-            showNotification('Failed to load shared comparison. Please check your connection.', 'error');
+            hideBlockingOverlay();
+            showToast('Failed to load shared comparison. Please check your connection.', 'error');
             window.history.replaceState({}, document.title, window.location.pathname);
             isLoadingFromSharedUrl = false;
         }
@@ -996,11 +1029,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentLoadingIndex = 0;
 
         // Hide navigation if no album has more than one image
-        if (maxImagesInQueue <= 1) {
-            comparisonNavigation.classList.add('hidden');
-        } else {
-            comparisonNavigation.classList.remove('hidden');
-        }
+        // if (maxImagesInQueue <= 1) {
+        //     comparisonNavigation.classList.add('hidden');
+        // } else {
+        //     comparisonNavigation.classList.remove('hidden');
+        // }
 
         // Clear previous content and remove any old inline styles
         comparisonGrid.innerHTML = '';
@@ -1488,6 +1521,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 fetchAndDisplayAlbums();
                 saveSettingsButton.disabled = false;
                 saveSettingsButton.textContent = 'Save';
+                
+                // Check if there's a pending shared comparison to load
+                const pendingShare = sessionStorage.getItem('pendingSharedComparison');
+                if (pendingShare) {
+                    sessionStorage.removeItem('pendingSharedComparison');
+                    const shareData = JSON.parse(pendingShare);
+                    
+                    // Reconstruct the URL and reload the shared comparison
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?share=${encodeURIComponent(btoa(JSON.stringify(shareData)))}`;
+                    window.location.href = shareUrl;
+                }
             }, 1000);
         } else {
             settingsError.textContent = 'Invalid credentials or network error.';
