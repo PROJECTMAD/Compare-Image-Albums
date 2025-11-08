@@ -473,6 +473,159 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
+     * Extracts metadata from an image URL using exifr library.
+     */
+    async function extractImageMetadata(imageUrl) {
+        try {
+            const metadata = await exifr.parse(imageUrl, true);
+            return metadata || null;
+        } catch (error) {
+            console.warn('Failed to extract metadata from image:', imageUrl, error);
+            return null;
+        }
+    }
+
+    /**
+     * Formats a metadata value for display.
+     */
+    function formatMetadataValue(value) {
+        if (value === null || value === undefined) return 'N/A';
+        if (typeof value === 'object') return JSON.stringify(value);
+        return String(value);
+    }
+
+    /**
+     * Copies text to clipboard and provides visual feedback.
+     */
+    async function copyToClipboard(text, button) {
+        try {
+            await navigator.clipboard.writeText(text);
+            const originalContent = button.innerHTML;
+            button.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!`;
+            button.classList.add('copied');
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.classList.remove('copied');
+            }, 2000);
+        } catch (error) {
+            console.error('Failed to copy to clipboard:', error);
+            button.innerHTML = 'Error';
+            setTimeout(() => {
+                button.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Copy`;
+            }, 1500);
+        }
+    }
+
+    /**
+     * Creates a metadata tooltip element with the extracted metadata.
+     */
+    function createMetadataTooltip(metadata) {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'metadata-tooltip';
+        
+        if (!metadata) {
+            tooltip.innerHTML = '<div class="metadata-no-data">No metadata available</div>';
+            return tooltip;
+        }
+
+        const fields = [
+            { key: 'user_prompt', label: 'Prompt', isPrompt: true },
+            { key: 'user_loras', label: 'LoRAs' },
+            { key: 'user_checkpoint', label: 'Checkpoint' },
+            { key: 'user_sampler', label: 'Sampler' },
+            { key: 'user_scheduler', label: 'Scheduler' },
+            { key: 'DateTime', label: 'Date' },
+            { key: 'DateTimeOriginal', label: 'Created' },
+            { key: 'CreateDate', label: 'Create Date' },
+        ];
+
+        let hasData = false;
+        let htmlContent = '';
+
+        fields.forEach(field => {
+            const value = metadata[field.key];
+            if (value !== null && value !== undefined) {
+                hasData = true;
+                const formattedValue = formatMetadataValue(value);
+                
+                if (field.isPrompt && formattedValue !== 'N/A') {
+                    htmlContent += `
+                        <div class="metadata-row">
+                            <span class="metadata-label">${field.label}:</span>
+                            <div class="metadata-value metadata-prompt">
+                                <div class="metadata-prompt-text">${formattedValue}</div>
+                                <button class="metadata-copy-btn" data-copy-text="${formattedValue.replace(/"/g, '&quot;')}">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                    </svg>
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else if (formattedValue !== 'N/A') {
+                    htmlContent += `
+                        <div class="metadata-row">
+                            <span class="metadata-label">${field.label}:</span>
+                            <span class="metadata-value">${formattedValue}</span>
+                        </div>
+                    `;
+                }
+            }
+        });
+
+        if (!hasData) {
+            tooltip.innerHTML = '<div class="metadata-no-data">No metadata available</div>';
+        } else {
+            tooltip.innerHTML = htmlContent;
+            
+            // Add click handlers for copy buttons after tooltip is created
+            setTimeout(() => {
+                tooltip.querySelectorAll('.metadata-copy-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const textToCopy = btn.dataset.copyText;
+                        copyToClipboard(textToCopy, btn);
+                    });
+                });
+            }, 0);
+        }
+
+        return tooltip;
+    }
+
+    /**
+     * Loads metadata for a comparison item.
+     */
+    async function loadMetadataForImage(imageContainer, imageUrl) {
+        // Check if metadata is already loaded
+        if (imageContainer.querySelector('.metadata-tooltip:not(.metadata-loading-wrapper)')) {
+            return;
+        }
+
+        // Add loading indicator
+        const loadingTooltip = document.createElement('div');
+        loadingTooltip.className = 'metadata-tooltip metadata-loading-wrapper';
+        loadingTooltip.innerHTML = `
+            <div class="metadata-loading">
+                <div class="metadata-spinner"></div>
+                <span>Loading metadata...</span>
+            </div>
+        `;
+        imageContainer.appendChild(loadingTooltip);
+
+        // Extract metadata
+        const metadata = await extractImageMetadata(imageUrl);
+        
+        // Remove loading indicator
+        loadingTooltip.remove();
+        
+        // Add actual metadata tooltip
+        const tooltip = createMetadataTooltip(metadata);
+        imageContainer.appendChild(tooltip);
+    }
+
+    /**
      * REWRITTEN: Shows the comparison view with a dynamic flexbox layout.
      * Enhanced with skeleton loaders and lazy loading.
      */
@@ -514,6 +667,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
             comparisonGrid.appendChild(item);
+
+            // Add hover event listener to load metadata on demand
+            const imageContainer = item.querySelector('.image-container');
+            item.metadataLoaded = false;
+            
+            item.addEventListener('mouseenter', () => {
+                if (!item.metadataLoaded) {
+                    const currentImg = imageContainer.querySelector('img');
+                    const currentImageUrl = currentImg ? currentImg.dataset.src : '';
+                    if (currentImageUrl) {
+                        item.metadataLoaded = true;
+                        loadMetadataForImage(imageContainer, currentImageUrl);
+                    }
+                }
+            });
         });
 
         // Initialize lazy loading for comparison images
@@ -612,6 +780,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const imageIndexForThisAlbum = globalImageIndex % album.imageUrls.length;
                 const img = item.querySelector('img');
                 const imageContainer = item.querySelector('.image-container');
+                
+                // Remove old metadata tooltips
+                const oldTooltips = imageContainer.querySelectorAll('.metadata-tooltip, .metadata-loading-wrapper');
+                oldTooltips.forEach(tooltip => tooltip.remove());
+                
+                // Reset metadata loaded flag for this item
+                item.metadataLoaded = false;
                 
                 // Show skeleton loader if it doesn't exist
                 let skeleton = imageContainer.querySelector('.comparison-skeleton-loader');
