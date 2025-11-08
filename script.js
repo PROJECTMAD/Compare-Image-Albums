@@ -35,6 +35,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- URL Sharing State ---
     let isLoadingFromSharedUrl = false;
 
+    // ADD the following code right below it:
+    const MIN_SKELETON_TIME = 0; // Minimum time in ms to display skeleton
+
+    /**
+     * Manages the lazy load transition for an image and its skeleton loader,
+     * ensuring the skeleton is displayed for a minimum amount of time.
+     * @param {HTMLImageElement} img The image element to load.
+     * @param {HTMLElement} skeleton The corresponding skeleton loader element.
+     */
+    function manageLazyLoadTransition(img, skeleton) {
+        const startTime = Date.now();
+
+        const onImageLoad = () => {
+            const elapsedTime = Date.now() - startTime;
+            const remainingTime = Math.max(0, MIN_SKELETON_TIME - elapsedTime);
+
+            setTimeout(() => {
+                if (img) {
+                    img.classList.add('loaded');
+                }
+                // Hide the skeleton after the image has had time to fade in
+                if (skeleton) {
+                    setTimeout(() => {
+                        skeleton.style.opacity = '0';
+                        setTimeout(() => skeleton.style.display = 'none', 300);
+                    }, 400); // This should match your .lazy-image transition duration
+                }
+            }, remainingTime);
+        };
+
+        img.onload = onImageLoad;
+        img.onerror = () => {
+            // On error, just hide the skeleton immediately
+            if (skeleton) {
+                skeleton.style.display = 'none';
+            }
+        };
+
+        img.src = img.dataset.src;
+    }
+
 
     /**
      * A generic function to make calls to the REST API.
@@ -155,16 +196,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
-
-                        img.onload = () => {
-                            img.classList.add('loaded');
-                            const skeleton = img.previousElementSibling;
-                            if (skeleton && skeleton.classList.contains('skeleton-loader')) {
-                                setTimeout(() => skeleton.remove(), 400);
-                            }
-                        };
-
-                        img.src = img.dataset.src;
+                        const skeleton = img.previousElementSibling;
+                        if (skeleton && skeleton.classList.contains('skeleton-loader')) {
+                            // Use our new helper function
+                            manageLazyLoadTransition(img, skeleton);
+                        }
                         observer.unobserve(img);
                     }
                 });
@@ -326,14 +362,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const lazyLoadDetailImages = () => {
         const detailImages = document.querySelectorAll('#detail-image-gallery .lazy-image');
         detailImages.forEach(img => {
-            img.src = img.dataset.src;
-            img.onload = () => {
-                img.classList.add('loaded');
-                const skeleton = img.previousElementSibling;
-                if (skeleton && skeleton.classList.contains('skeleton-loader')) {
-                    setTimeout(() => skeleton.remove(), 400);
-                }
-            };
+            const skeleton = img.previousElementSibling;
+            if (skeleton && skeleton.classList.contains('skeleton-loader')) {
+                manageLazyLoadTransition(img, skeleton);
+            }
         });
     };
 
@@ -1122,7 +1154,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Track current loading index to prevent mixing images from fast navigation
     let currentLoadingIndex = 0;
     let isLoadingImages = false; // Track if images are currently loading
-    const minSkeletonDisplayTime = 150; // Minimum time to show skeleton (ms)
 
     /**
      * Disables or enables navigation buttons during image loading
@@ -1156,135 +1187,84 @@ document.addEventListener('DOMContentLoaded', async () => {
      * Blocks navigation buttons during loading to prevent race conditions.
      */
     function updateAllComparisonImages(newIndex) {
-        if (newIndex < 0 || newIndex >= maxImagesInQueue) {
-            return; // Do nothing if index is out of bounds
-        }
-
-        // Prevent navigation if already loading
-        if (isLoadingImages) {
-            return;
+        if (newIndex < 0 || newIndex >= maxImagesInQueue || isLoadingImages) {
+            return; // Prevent navigation if out of bounds or already loading
         }
 
         globalImageIndex = newIndex;
-        currentLoadingIndex++; // Increment to track this specific navigation request
-        const thisLoadingIndex = currentLoadingIndex; // Capture the current loading index
-        
         isLoadingImages = true;
-        setNavigationEnabled(false); // Disable navigation buttons
+        setNavigationEnabled(false);
 
         const comparisonItems = document.querySelectorAll('.comparison-item');
-        let loadedCount = 0;
-        const totalItems = comparisonItems.length;
-        
-        // Function to check if all images are loaded
+        let imagesToLoad = comparisonItems.length;
+        let imagesLoaded = 0;
+
         const checkAllLoaded = () => {
-            loadedCount++;
-            if (loadedCount >= totalItems && thisLoadingIndex === currentLoadingIndex) {
+            imagesLoaded++;
+            if (imagesLoaded >= imagesToLoad) {
                 isLoadingImages = false;
-                setNavigationEnabled(true); // Re-enable navigation buttons
+                setNavigationEnabled(true);
             }
         };
-        comparisonItems.forEach(item => {
-            const queueIndex = parseInt(item.dataset.queueIndex, 10);
-            const album = queue[queueIndex];
 
-            if (album.imageUrls.length > 0) {
-                const imageIndexForThisAlbum = globalImageIndex % album.imageUrls.length;
-                const img = item.querySelector('img');
-                const imageContainer = item.querySelector('.image-container');
-                
-                // Remove old metadata tooltips
-                const oldTooltips = imageContainer.querySelectorAll('.metadata-tooltip, .metadata-loading-wrapper');
-                oldTooltips.forEach(tooltip => tooltip.remove());
-                
-                // Reset metadata loaded flag for this item
-                item.metadataLoaded = false;
-                
-                // Show skeleton loader if it doesn't exist
-                let skeleton = imageContainer.querySelector('.comparison-skeleton-loader');
-                if (!skeleton) {
-                    skeleton = document.createElement('div');
-                    skeleton.className = 'comparison-skeleton-loader';
-                    imageContainer.insertBefore(skeleton, img);
-                }
-                
-                // Record when we started showing the skeleton
-                const skeletonShowTime = Date.now();
-                
-                // Fade out current image and show skeleton immediately
-                img.classList.remove('loaded');
+        comparisonItems.forEach(item => {
+            const img = item.querySelector('img');
+            const imageContainer = item.querySelector('.image-container');
+            const skeleton = imageContainer.querySelector('.comparison-skeleton-loader');
+
+            // --- FIX: Cancel any previously scheduled timers for this specific item ---
+            if (item.hideSkeletonTimeout) {
+                clearTimeout(item.hideSkeletonTimeout);
+            }
+            // --- END FIX ---
+
+            imageContainer.querySelector('.metadata-tooltip')?.remove();
+            item.metadataLoaded = false;
+
+            img.classList.remove('loaded');
+
+            if (skeleton) {
                 skeleton.style.display = 'block';
                 skeleton.style.opacity = '1';
-                
-                // Update image source
+            }
+            const skeletonShowTime = Date.now();
+
+            const onImageLoad = () => {
+                const elapsedTime = Date.now() - skeletonShowTime;
+                const remainingTime = Math.max(0, MIN_SKELETON_TIME - elapsedTime);
+
+                setTimeout(() => {
+                    img.classList.add('loaded');
+
+                    // Schedule the skeleton to be hidden, and store the timer ID
+                    item.hideSkeletonTimeout = setTimeout(() => {
+                        if (skeleton) {
+                            skeleton.style.display = 'none';
+                        }
+                    }, 400); // Match CSS transition duration
+
+                    checkAllLoaded();
+                }, remainingTime);
+            };
+
+            img.onload = onImageLoad;
+            img.onerror = () => {
+                if (skeleton) {
+                    skeleton.style.display = 'none';
+                }
+                checkAllLoaded();
+            };
+
+            const queueIndex = parseInt(item.dataset.queueIndex, 10);
+            const album = queue[queueIndex];
+            if (album && album.imageUrls.length > 0) {
+                const imageIndexForThisAlbum = globalImageIndex % album.imageUrls.length;
                 const newImageUrl = album.imageUrls[imageIndexForThisAlbum];
                 img.dataset.src = newImageUrl;
-                
-                // Load new image with validation to prevent mixing
-                const tempImg = new Image();
-                
-                const completeImageLoad = () => {
-                    // Only apply the image if this is still the current navigation request
-                    if (thisLoadingIndex !== currentLoadingIndex) {
-                        checkAllLoaded(); // Still count as loaded even if aborted
-                        return; // Abort if a newer request has been made
-                    }
-                    
-                    // Calculate how long the skeleton has been visible
-                    const skeletonDisplayDuration = Date.now() - skeletonShowTime;
-                    const remainingTime = Math.max(0, minSkeletonDisplayTime - skeletonDisplayDuration);
-                    
-                    // Ensure skeleton shows for minimum time to prevent flickering
-                    setTimeout(() => {
-                        if (thisLoadingIndex === currentLoadingIndex) {
-                            img.src = newImageUrl;
-                            
-                            // Wait a tiny bit for the image to actually render
-                            requestAnimationFrame(() => {
-                                requestAnimationFrame(() => {
-                                    if (thisLoadingIndex === currentLoadingIndex) {
-                                        img.classList.add('loaded');
-                                        
-                                        // Hide skeleton after fade-in completes
-                                        setTimeout(() => {
-                                            if (skeleton && thisLoadingIndex === currentLoadingIndex) {
-                                                skeleton.style.display = 'none';
-                                            }
-                                            checkAllLoaded(); // Mark this item as loaded
-                                        }, 400);
-                                    } else {
-                                        checkAllLoaded(); // Mark as loaded even if request changed
-                                    }
-                                });
-                            });
-                        } else {
-                            checkAllLoaded(); // Mark as loaded even if request changed
-                        }
-                    }, remainingTime);
-                };
-                
-                tempImg.onload = completeImageLoad;
-                tempImg.onerror = () => {
-                    // Hide skeleton even on error, but only if this is the current request
-                    if (thisLoadingIndex === currentLoadingIndex) {
-                        const skeletonDisplayDuration = Date.now() - skeletonShowTime;
-                        const remainingTime = Math.max(0, minSkeletonDisplayTime - skeletonDisplayDuration);
-                        
-                        setTimeout(() => {
-                            if (thisLoadingIndex === currentLoadingIndex) {
-                                img.classList.add('loaded');
-                                if (skeleton) {
-                                    skeleton.style.display = 'none';
-                                }
-                            }
-                            checkAllLoaded(); // Mark as loaded even on error
-                        }, remainingTime);
-                    } else {
-                        checkAllLoaded(); // Mark as loaded even if request changed
-                    }
-                };
-                
-                tempImg.src = newImageUrl;
+                img.src = newImageUrl;
+            } else {
+                img.src = '';
+                checkAllLoaded();
             }
         });
 
