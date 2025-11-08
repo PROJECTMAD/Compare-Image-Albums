@@ -437,6 +437,34 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
+/* Adjust metadata size for smaller grids */
+.comparison-grid.grid-cols-6 .metadata-tooltip,
+.comparison-grid.grid-cols-7 .metadata-tooltip,
+.comparison-grid.grid-cols-8 .metadata-tooltip {
+    font-size: 0.65rem;
+    padding: 0.5rem;
+}
+
+.comparison-grid.grid-cols-6 .metadata-label,
+.comparison-grid.grid-cols-7 .metadata-label,
+.comparison-grid.grid-cols-8 .metadata-label {
+    min-width: 4rem;
+    font-size: 0.65rem;
+}
+
+.comparison-grid.grid-cols-6 .metadata-row,
+.comparison-grid.grid-cols-7 .metadata-row,
+.comparison-grid.grid-cols-8 .metadata-row {
+    margin-bottom: 0.35rem;
+}
+
+.comparison-grid.grid-cols-6 .metadata-copy-btn,
+.comparison-grid.grid-cols-7 .metadata-copy-btn,
+.comparison-grid.grid-cols-8 .metadata-copy-btn {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.4rem;
+}
+
 .comparison-item:hover .metadata-tooltip {
     opacity: 1;
     pointer-events: auto;
@@ -481,6 +509,11 @@
     color: #e5e7eb;
     word-break: break-word;
     flex: 1;
+    line-height: 1.5;
+}
+
+.metadata-value span {
+    display: inline;
 }
 
 .metadata-prompt {

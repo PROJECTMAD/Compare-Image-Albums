@@ -473,6 +473,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
+     * Escapes HTML special characters to prevent XSS.
+     */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
      * Extracts metadata from an image URL using exifr library.
      */
     async function extractImageMetadata(imageUrl) {
@@ -486,12 +495,69 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
+     * Parses LoRA tags from a string and formats them with colors.
+     * Format: <lora:name:weight:other_params> or <lora:name>
+     */
+    function parseAndFormatLoras(lorasString) {
+        if (!lorasString) return 'N/A';
+        
+        const loraRegex = /<lora:([^:>]+)(?::([^:>]+))?[^>]*>/g;
+        const matches = [];
+        let match;
+        
+        while ((match = loraRegex.exec(lorasString)) !== null) {
+            const name = match[1];
+            const weight = match[2];
+            matches.push({ name, weight });
+        }
+        
+        if (matches.length === 0) return escapeHtml(lorasString);
+        
+        return matches.map(lora => {
+            const escapedName = escapeHtml(lora.name);
+            const displayName = `<span style="color: #a78bfa; font-weight: 600;">${escapedName}</span>`;
+            const displayWeight = lora.weight ? `:<span style="color: #a78bfa; font-weight: 600;">${escapeHtml(lora.weight)}</span>` : '';
+            return displayName + displayWeight;
+        }).join(' → ');
+    }
+
+    /**
+     * Parses checkpoint tags from a string and formats them with colors.
+     * Format: <checkpoint:name>
+     */
+    function parseAndFormatCheckpoint(checkpointString) {
+        if (!checkpointString) return 'N/A';
+        
+        const checkpointRegex = /<checkpoint:([^>]+)>/g;
+        const match = checkpointRegex.exec(checkpointString);
+        
+        if (match) {
+            return `<span style="color: #fbbf24; font-weight: 600;">${escapeHtml(match[1])}</span>`;
+        }
+        
+        return escapeHtml(checkpointString);
+    }
+
+    /**
      * Formats a metadata value for display.
      */
-    function formatMetadataValue(value) {
+    function formatMetadataValue(value, fieldKey) {
         if (value === null || value === undefined) return 'N/A';
-        if (typeof value === 'object') return JSON.stringify(value);
-        return String(value);
+        if (typeof value === 'object') return escapeHtml(JSON.stringify(value));
+        
+        const stringValue = String(value);
+        
+        // Special formatting for LoRAs
+        if (fieldKey === 'user_loras') {
+            return parseAndFormatLoras(stringValue);
+        }
+        
+        // Special formatting for checkpoint
+        if (fieldKey === 'user_checkpoint') {
+            return parseAndFormatCheckpoint(stringValue);
+        }
+        
+        return escapeHtml(stringValue);
     }
 
     /**
@@ -546,7 +612,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const value = metadata[field.key];
             if (value !== null && value !== undefined) {
                 hasData = true;
-                const formattedValue = formatMetadataValue(value);
+                const formattedValue = formatMetadataValue(value, field.key);
+                const rawValue = String(value); // Keep raw value for copying
                 
                 if (field.isPrompt && formattedValue !== 'N/A') {
                     htmlContent += `
@@ -554,7 +621,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <span class="metadata-label">${field.label}:</span>
                             <div class="metadata-value metadata-prompt">
                                 <div class="metadata-prompt-text">${formattedValue}</div>
-                                <button class="metadata-copy-btn" data-copy-text="${formattedValue.replace(/"/g, '&quot;')}">
+                                <button class="metadata-copy-btn" data-copy-text="${rawValue.replace(/"/g, '&quot;')}">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                     </svg>
