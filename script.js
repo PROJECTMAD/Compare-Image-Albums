@@ -184,6 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const searchInput = document.getElementById('search-input');
     const clearSearchButton = document.getElementById('clear-search-button');
     const suggestionsBox = document.getElementById('suggestions-box');
+    let selectedSuggestionIndex = -1;
 
     const filterAlbums = (query) => {
         query = query.toLowerCase();
@@ -212,6 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const showSuggestions = (query) => {
+        selectedSuggestionIndex = -1;
         if (!query) {
             suggestionsBox.classList.add('hidden');
             return;
@@ -222,11 +224,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (matchedAlbums.length > 0) {
             suggestionsBox.innerHTML = matchedAlbums
-                .map(title => `<div class="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">${title}</div>`)
+                .map((title, index) => `<div class="suggestion-item p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors" data-index="${index}">${title}</div>`)
                 .join('');
             suggestionsBox.classList.remove('hidden');
         } else {
             suggestionsBox.classList.add('hidden');
+        }
+    };
+
+    const updateSuggestionSelection = () => {
+        const suggestions = suggestionsBox.querySelectorAll('.suggestion-item');
+        suggestions.forEach((item, index) => {
+            if (index === selectedSuggestionIndex) {
+                item.classList.add('selected-suggestion');
+                item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            } else {
+                item.classList.remove('selected-suggestion');
+            }
+        });
+    };
+
+    const selectCurrentSuggestion = () => {
+        const suggestions = suggestionsBox.querySelectorAll('.suggestion-item');
+        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestions.length) {
+            const selectedText = suggestions[selectedSuggestionIndex].textContent;
+            searchInput.value = selectedText;
+            filterAlbums(selectedText);
+            suggestionsBox.classList.add('hidden');
+            selectedSuggestionIndex = -1;
         }
     };
 
@@ -237,24 +262,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         clearSearchButton.classList.toggle('hidden', !query);
     });
 
+    // Keyboard navigation for search suggestions
+    searchInput.addEventListener('keydown', (e) => {
+        const suggestions = suggestionsBox.querySelectorAll('.suggestion-item');
+        const suggestionsVisible = !suggestionsBox.classList.contains('hidden');
+        
+        if (e.key === 'ArrowDown' && suggestionsVisible) {
+            e.preventDefault();
+            selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+            updateSuggestionSelection();
+        } else if (e.key === 'ArrowUp' && suggestionsVisible) {
+            e.preventDefault();
+            selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+            if (selectedSuggestionIndex === -1) {
+                suggestions.forEach(item => item.classList.remove('selected-suggestion'));
+            } else {
+                updateSuggestionSelection();
+            }
+        } else if (e.key === 'Enter' && suggestionsVisible && selectedSuggestionIndex >= 0) {
+            e.preventDefault();
+            selectCurrentSuggestion();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            if (suggestionsVisible) {
+                suggestionsBox.classList.add('hidden');
+                selectedSuggestionIndex = -1;
+            } else if (searchInput.value) {
+                searchInput.value = '';
+                filterAlbums('');
+                clearSearchButton.classList.add('hidden');
+            }
+        }
+    });
+
     clearSearchButton.addEventListener('click', () => {
         searchInput.value = '';
         filterAlbums('');
         suggestionsBox.classList.add('hidden');
         clearSearchButton.classList.add('hidden');
+        selectedSuggestionIndex = -1;
     });
 
     suggestionsBox.addEventListener('click', (e) => {
-        if (e.target.tagName === 'DIV') {
+        if (e.target.classList.contains('suggestion-item')) {
             searchInput.value = e.target.textContent;
             filterAlbums(e.target.textContent);
             suggestionsBox.classList.add('hidden');
+            selectedSuggestionIndex = -1;
         }
     });
     
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.relative')) {
             suggestionsBox.classList.add('hidden');
+            selectedSuggestionIndex = -1;
         }
     });
 
@@ -962,6 +1023,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     globalPrevBtn.addEventListener('click', () => {
         updateAllComparisonImages(globalImageIndex - 1);
+    });
+
+    // Keyboard navigation for Comparison Viewer
+    document.addEventListener('keydown', (e) => {
+        // Only handle keyboard events when comparison modal is visible
+        const comparisonVisible = !comparisonModal.classList.contains('pointer-events-none');
+        
+        if (comparisonVisible) {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (globalImageIndex > 0) {
+                    updateAllComparisonImages(globalImageIndex - 1);
+                }
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (globalImageIndex < maxImagesInQueue - 1) {
+                    updateAllComparisonImages(globalImageIndex + 1);
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                hideComparisonView();
+            }
+        }
     });
 
     // --- Popup Menu & Settings Logic ---

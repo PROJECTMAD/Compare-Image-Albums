@@ -181,8 +181,47 @@
 
 /* Style for album cards that are in the queue */
 .album-card.queued {
-    box-shadow: 0 0 0 3px #10b981; /* green-500 */
+    box-shadow: 0 0 0 4px #10b981, 0 8px 16px rgba(16, 185, 129, 0.3); /* green-500 with glow */
     transform: translateY(-4px) scale(1.02);
+    position: relative;
+}
+
+.album-card.queued::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    z-index: -1;
+}
+
+/* Floating buttons enhanced styling */
+.floating-button {
+    position: relative;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+}
+
+.floating-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.floating-button:hover {
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.4), 0 10px 15px -6px rgba(0, 0, 0, 0.3);
+}
+
+.floating-button:active {
+    transform: scale(1.05) !important;
 }
 
 /* Keyframe animation for the queue button */
@@ -207,6 +246,55 @@
     opacity: 0;
     transform: scale(0.92);
     pointer-events: none;
+}
+
+/* Selected suggestion styling */
+.suggestion-item {
+    position: relative;
+}
+
+.suggestion-item.selected-suggestion {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15)) !important;
+    color: #818cf8;
+    font-weight: 500;
+}
+
+.dark .suggestion-item.selected-suggestion {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25)) !important;
+    color: #a5b4fc;
+}
+
+.suggestion-item.selected-suggestion::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #6366f1, #8b5cf6);
+    border-radius: 0 2px 2px 0;
+}
+
+#suggestions-box {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#suggestions-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+#suggestions-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#suggestions-box::-webkit-scrollbar-thumb {
+    background: #6366f1;
+    border-radius: 3px;
+}
+
+#suggestions-box::-webkit-scrollbar-thumb:hover {
+    background: #4f46e5;
 }
 
 /* --- FINAL FLEXBOX COMPARISON STYLES --- */
@@ -384,28 +472,69 @@
 }
 
 #comparison-navigation .nav-button {
-    background-color: rgba(79, 70, 229, 0.8);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(139, 92, 246, 0.9));
     color: white;
     width: 3.5rem;
     height: 3.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 150ms ease-in-out;
+    transition: all 200ms ease-in-out;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 20px rgba(99, 102, 241, 0.2);
+    position: relative;
 }
 
-#comparison-navigation .nav-button:hover {
-    background-color: rgba(79, 70, 229, 1);
+#comparison-navigation .nav-button::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05));
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+#comparison-navigation .nav-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 1), rgba(139, 92, 246, 1));
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(99, 102, 241, 0.4);
+}
+
+#comparison-navigation .nav-button:active:not(:disabled) {
+    transform: scale(0.98);
 }
 
 #comparison-navigation .nav-button:disabled {
-    opacity: 0.4;
+    opacity: 0.3;
     cursor: not-allowed;
+    background: linear-gradient(135deg, rgba(75, 85, 99, 0.6), rgba(55, 65, 81, 0.6));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Close button z-index */
+/* Close button z-index and styling */
 #close-comparison-button {
     z-index: 100;
+}
+
+.comparison-close-button {
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparison-close-button:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.comparison-close-button:active {
+    transform: scale(1.05) rotate(90deg);
 }
 
 /* Global image counter z-index */

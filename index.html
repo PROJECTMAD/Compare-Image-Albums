@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Music Albums v7</title>
+    <title>AI Slop Comparison</title>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -20,17 +20,17 @@
 
         <!-- Floating Queue Button -->
         <button id="queue-button"
-            class="bg-green-600 hover:bg-green-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 opacity-0 pointer-events-none scale-95">
+            class="floating-button bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 opacity-0 pointer-events-none scale-95">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
             <span id="queue-count"
-                class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white dark:border-gray-900">0</span>
+                class="absolute -top-1 -right-1 bg-gradient-to-br from-red-500 to-pink-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white dark:border-gray-900 shadow-md">0</span>
         </button>
 
         <!-- Floating Menu Button -->
         <button id="menu-button"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110">
+            class="floating-button bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
             </svg>
@@ -180,7 +180,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 h-full flex flex-col">
         <!-- Search and Filters -->
         <div class="flex-shrink-0">
-            <h1 class="text-4xl font-bold mb-4 text-center">Your Album Collection</h1>
+            <h1 class="text-4xl font-bold mb-4 text-center">AI Slop Collection</h1>
             <div class="relative">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3"><svg class="h-5 w-5 text-gray-400"
                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -246,10 +246,10 @@
 
     <!-- Close Button -->
     <button id="close-comparison-button"
-        class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors bg-gray-900/50 rounded-full z-10">
-        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        class="comparison-close-button absolute top-4 right-4 text-white/90 hover:text-white transition-all bg-gray-900/60 hover:bg-red-600/80 rounded-full z-10 p-2">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
     </button>
 
