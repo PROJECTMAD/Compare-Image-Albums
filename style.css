@@ -251,17 +251,17 @@
 /* Selected suggestion styling */
 .suggestion-item {
     position: relative;
+    color: #d1d5db;
+}
+
+.suggestion-item:hover {
+    background: rgba(75, 85, 99, 0.5) !important;
 }
 
 .suggestion-item.selected-suggestion {
-    background: linear-gradient(90deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15)) !important;
-    color: #818cf8;
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3)) !important;
+    color: #c4b5fd;
     font-weight: 500;
-}
-
-.dark .suggestion-item.selected-suggestion {
-    background: linear-gradient(90deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.25)) !important;
-    color: #a5b4fc;
 }
 
 .suggestion-item.selected-suggestion::before {
@@ -704,11 +704,8 @@
 /* Premium Suggestions Box */
 .premium-suggestions {
     backdrop-filter: blur(10px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(99, 102, 241, 0.1);
-}
-
-.dark .premium-suggestions {
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(139, 92, 246, 0.2);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(139, 92, 246, 0.3);
+    background: rgba(31, 41, 55, 0.98) !important;
 }
 
 /* Premium Detail Card */
@@ -738,6 +735,122 @@
 
 .queue-list-scroll::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, #4f46e5, #7c3aed);
+}
+
+/* Premium Title Styling */
+.premium-title {
+    position: relative;
+    animation: titleGlow 3s ease-in-out infinite;
+    letter-spacing: -0.02em;
+}
+
+@keyframes titleGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
+    }
+    50% {
+        filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.5));
+    }
+}
+
+/* Premium Search Input */
+.premium-search-input {
+    position: relative;
+    transition: all 0.3s ease;
+    background: linear-gradient(to bottom, rgba(31, 41, 55, 0.95), rgba(17, 24, 39, 0.95)) !important;
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2), 0 2px 4px -1px rgba(99, 102, 241, 0.1);
+}
+
+.premium-search-input::placeholder {
+    color: rgba(156, 163, 175, 0.8);
+}
+
+.premium-search-input:focus {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25), 0 10px 15px -3px rgba(139, 92, 246, 0.4) !important;
+    transform: translateY(-2px);
+    background: linear-gradient(to bottom, rgba(31, 41, 55, 1), rgba(17, 24, 39, 1)) !important;
+}
+
+/* Search Container Enhancement */
+.search-container {
+    position: relative;
+}
+
+.search-container::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    border-radius: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.search-container:focus-within::before {
+    opacity: 1;
+}
+
+/* Clear Search Button */
+.clear-search-btn {
+    z-index: 10;
+}
+
+.clear-search-btn:hover svg {
+    transform: scale(1.2) rotate(90deg);
+}
+
+/* Detail Title */
+.detail-title {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+/* Detail Description Enhancement */
+.detail-description {
+    line-height: 1.6;
+    backdrop-filter: blur(5px);
+}
+
+.detail-description::-webkit-scrollbar {
+    width: 6px;
+}
+
+.detail-description::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.detail-description::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #6366f1, #8b5cf6);
+    border-radius: 3px;
+}
+
+.detail-description::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #4f46e5, #7c3aed);
+}
+
+/* Premium Badge */
+.premium-badge {
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Detail Action Container - Enhanced Button Styles */
+.detail-action-container button {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.detail-action-container button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.detail-action-container button:active {
+    transform: scale(1.05);
 }
 
 /* Global image counter z-index */

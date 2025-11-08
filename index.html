@@ -20,12 +20,12 @@
 
         <!-- Floating Queue Button -->
         <button id="queue-button"
-            class="floating-button bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 opacity-0 pointer-events-none scale-95">
+            class="floating-button bg-gradient-to-br from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 opacity-0 pointer-events-none scale-95">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
             <span id="queue-count"
-                class="absolute -top-1 -right-1 bg-gradient-to-br from-red-500 to-pink-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white dark:border-gray-900 shadow-md">0</span>
+                class="absolute -top-1 -right-1 bg-gradient-to-br from-yellow-400 to-orange-500 text-gray-900 text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-gray-900 shadow-md">0</span>
         </button>
 
         <!-- Floating Menu Button -->
@@ -180,25 +180,25 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 h-full flex flex-col">
         <!-- Search and Filters -->
         <div class="flex-shrink-0">
-            <h1 class="text-4xl font-bold mb-4 text-center">AI Slop Collection</h1>
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3"><svg class="h-5 w-5 text-gray-400"
+            <h1 class="premium-title text-5xl font-bold mb-4 text-center bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent drop-shadow-lg">AI Slop Collection</h1>
+            <div class="relative search-container">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 z-10"><svg class="h-5 w-5 text-indigo-500 dark:text-purple-400"
                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd"
                             d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
                             clip-rule="evenodd" />
                     </svg></span>
                 <input id="search-input" type="text" placeholder="Search albums by title..."
-                    class="premium-input w-full pl-10 pr-10 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500">
-                <button id="clear-search-button" class="absolute inset-y-0 right-0 flex items-center pr-3 hidden"><svg
-                        class="h-5 w-5 text-gray-400 hover:text-gray-600" xmlns="http://www.w3.org/2000/svg"
+                    class="premium-search-input w-full pl-10 pr-10 py-3 border-2 border-gray-700 rounded-lg bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500 text-white">
+                <button id="clear-search-button" class="clear-search-btn absolute inset-y-0 right-0 flex items-center pr-3 hidden transition-all"><svg
+                        class="h-5 w-5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd"
                             d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                             clip-rule="evenodd" />
                     </svg></button>
                 <div id="suggestions-box"
-                    class="premium-suggestions absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hidden">
+                    class="premium-suggestions absolute z-10 w-full mt-1 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg hidden">
                 </div>
             </div>
         </div>
@@ -222,17 +222,17 @@
                     <!-- Album Info (50% width) -->
                     <div class="flex flex-col overflow-hidden md:col-span-6">
                         <div class="flex justify-between items-start mb-4">
-                            <h3 id="detail-title" class="text-2xl font-bold"></h3>
-                            <p id="detail-image-count" class="text-md text-gray-500 dark:text-gray-400 font-medium"></p>
+                            <h3 id="detail-title" class="detail-title text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent"></h3>
+                            <p id="detail-image-count" class="premium-badge text-md text-indigo-600 dark:text-indigo-400 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900 px-3 py-1 rounded-full border-2 border-indigo-200 dark:border-indigo-700 font-medium"></p>
                         </div>
                         <div id="detail-description"
-                            class="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg overflow-y-auto flex-grow">
+                            class="detail-description text-gray-700 dark:text-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/70 dark:to-gray-800/70 p-4 rounded-lg overflow-y-auto flex-grow border border-gray-200 dark:border-gray-700">
                             <!-- Description will be inserted here -->
                         </div>
                     </div>
 
                     <!-- Add/Remove Button Container -->
-                    <div id="detail-action-button-container" class="flex items-center justify-end md:col-span-1">
+                    <div id="detail-action-button-container" class="flex items-center justify-end md:col-span-1 detail-action-container">
                         <!-- The + or - button will be inserted here by script.js -->
                     </div>
                 </div>
