@@ -63,6 +63,11 @@
     transform: translateY(20px);
     transition-property: opacity, transform;
     transition-duration: 0.3s;
+    max-width: 1600px;
+    max-height: 800px;
+    position: sticky;
+    bottom: 0;
+    margin: 0 auto;
 }
 
 #album-detail-container.expanded {
@@ -404,7 +409,7 @@
     min-height: 0;
     flex: 1 1 550px;
     max-width: calc(92vh/1.46);
-    max-height: 90%;
+    max-height: 100%;
 }
 
 .comparison-item .image-container {
@@ -792,6 +797,13 @@
     opacity: 1;
 }
 
+#search-wrapper {
+    width: 100%;
+    margin: 0 auto;
+    padding-bottom: 1rem;
+    max-width: 400px;
+}
+
 /* Clear Search Button */
 .clear-search-btn {
     z-index: 10;
@@ -1077,7 +1089,7 @@
 }
 
 /* Share Button - positioned to the right of centered navigation */
-.share-button {
+.nav-share-button {
     position: absolute;
     right: 1rem;
     background-color: rgb(79, 70, 229);
@@ -1095,9 +1107,9 @@
 }
 
 /* Ensure overlay content inside nav sits above modal content */
-.navigation-container, .share-button, #comparison-navigation { z-index: 100; }
+.navigation-container, .nav-share-button, #comparison-navigation { z-index: 100; }
 
-.share-button:hover {
+.nav-share-button:hover {
     background-color: rgb(67, 56, 202);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
@@ -1110,7 +1122,7 @@
         bottom: 0.5rem;
     }
     
-    .share-button {
+    .nav-share-button {
         position: static;
         width: 3rem;
         height: 3rem;
@@ -1118,7 +1130,7 @@
         justify-content: center;
     }
     
-    .share-button-text {
+    .nav-share-button-text {
         display: none;
     }
 }

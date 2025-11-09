@@ -188,9 +188,9 @@
         </div>
     </div>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 h-full flex flex-col">
-        <!-- Search and Filters -->
-        <div class="flex-shrink-0">
+    <main class="flex flex-col h-full w-full mx-auto py-10" style="max-width: 1920px;">
+        <!-- Search -->
+        <div id="search-wrapper" class="flex-shrink-0">
             <h1 class="premium-title text-5xl font-bold mb-4 text-center bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent drop-shadow-lg">AI Slop Collection</h1>
             <div class="relative search-container">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 z-10"><svg class="h-5 w-5 text-indigo-500 dark:text-purple-400"
@@ -217,12 +217,12 @@
         <div class="relative flex-grow min-h-0">
             <!-- Albums Grid -->
             <div id="albums-grid"
-                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 h-full overflow-y-auto p-6">
+                class="flex flex-wrap gap-6 h-full w-full overflow-y-auto p-6 justify-center">
                 <!-- Album cards will be dynamically inserted here -->
             </div>
 
             <!-- MODIFIED Album Detail Container -->
-            <div id="album-detail-container" class="absolute bottom-0 left-0 right-0 p-4 z-30">
+            <div id="album-detail-container" class="p-4 z-30">
                 <div
                     class="premium-detail-card bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-lg shadow-2xl border-2 border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[20vh]">
                     <!-- Image Gallery (37.5% width) -->
@@ -272,11 +272,11 @@
     <!-- NEW Global Navigation with Share Button -->
     <div class="navigation-container">
         <!-- Share Button - positioned to the right of navigation -->
-        <button id="share-comparison-btn" class="share-button">
+        <button id="share-comparison-btn" class="nav-share-button">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
             </svg>
-            <span class="share-button-text">Share</span>
+            <span class="nav-share-button-text">Share</span>
         </button>
 
         <!-- Centered Navigation -->
