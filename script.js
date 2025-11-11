@@ -833,11 +833,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
-     * Extracts metadata from an image URL using exifr library.
+     * Extracts metadata from an image URL using ExifReader library.
      */
     async function extractImageMetadata(imageUrl) {
         try {
-            const metadata = await exifr.parse(imageUrl, true);
+            const metadata = await ExifReader.load(imageUrl);
             return metadata || null;
         } catch (error) {
             console.warn('Failed to extract metadata from image:', imageUrl, error);
@@ -960,7 +960,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let htmlContent = '';
 
         fields.forEach(field => {
-            const value = metadata[field.key];
+            const value = metadata[field.key]?.description;
             if (value !== null && value !== undefined) {
                 hasData = true;
                 const formattedValue = formatMetadataValue(value, field.key);

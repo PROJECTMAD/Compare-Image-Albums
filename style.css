@@ -1066,7 +1066,12 @@
     pointer-events: none; /* container does not catch pointer events */
 }
 
-/* Enable interaction for children */
+/* Only show navigation when comparison modal is visible */
+#comparison-modal.pointer-events-none .navigation-container {
+    display: none;
+}
+
+/* Enable interaction for children when visible */
 .navigation-container > * {
     pointer-events: auto;
 }
