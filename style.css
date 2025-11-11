@@ -302,22 +302,32 @@
     background: #4f46e5;
 }
 
-/* --- FINAL FLEXBOX COMPARISON STYLES --- */
+/* --- FINAL FLEXBOX COMPARISON STYLES (REVISED FOR MAX-FIT CONTAIN) --- */
+/*
+Core idea:
+- Modal body (comparison-grid) fills all available viewport minus top/bottom UI.
+- Each .comparison-item flexes so all items fit without overlap or scroll when reasonable.
+- Images use object-fit: contain to preserve aspect ratio.
+- We compute available height in CSS via viewport units and paddings.
+*/
+
 #comparison-modal {
-    overflow: hidden; /* Prevent any potential overflow from the modal itself */
+    overflow: hidden;
 }
 
+/* Fill viewport minus nav/close button area; center content; allow scroll only if strictly necessary */
 #comparison-grid {
+    position: absolute;
+    inset: 0;
+    padding: 4.5rem 1.5rem 4.5rem; /* top/bottom leave room for close button + navigation */
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    width: auto;
-    height: auto;
-    gap: 2rem 1rem;
-    padding: 4px;
+    gap: 1.5rem;
     overflow: auto;
     scroll-behavior: smooth;
+    box-sizing: border-box;
 }
 
 @media (min-width: 1601px) {
@@ -407,9 +417,14 @@
     flex-direction: column;
     gap: 0.5rem;
     min-height: 0;
-    flex: 1 1 550px;
-    max-width: calc(92vh/1.46);
-    max-height: 100%;
+
+    /*
+    Let items shrink to fit many columns, and grow when there are few.
+    The max-height is tied to viewport so items never exceed screen vertically.
+    */
+    flex: 1 1 min(22vw, 420px);
+    max-width: min(24vw, 480px);
+    max-height: calc(100vh - 8rem); /* nav + padding + close button clearance */
 }
 
 .comparison-item .image-container {
@@ -421,28 +436,28 @@
     min-height: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
 .comparison-item img {
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain;
+    object-fit: contain; /* preserve aspect ratio and never overflow container */
     position: relative;
     z-index: 1;
 }
 
-/* Skeleton loader for comparison images */
+/* Skeleton loader for comparison images
+   Match the container area but stay under the image (z-index 0),
+   so the eventual image (z-index 1) is always visible and clipped correctly.
+*/
 .comparison-skeleton-loader {
     position: absolute;
-    width: 100%;
+    inset: 0.75rem;
     overflow: hidden;
     background-color: #4f5570;
     border-radius: 0.5rem;
     z-index: 0;
-    aspect-ratio: 1 / 1.46;
-    margin: 1rem;
-    padding: 1rem;
-    height: auto;
 }
 
 .dark .comparison-skeleton-loader {
