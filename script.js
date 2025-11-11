@@ -1044,9 +1044,188 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
-     * REWRITTEN: Shows the comparison view with a dynamic flexbox layout.
-     * Enhanced with skeleton loaders and an initial loading state that blocks navigation until ready.
-     * Also respects the globalImageIndex for starting at a specific page from a shared URL.
+     * Compute an optimal grid (cols, rows, cellWidth, cellHeight) for mostly portrait images.
+     * Assumes typical image aspect ratio ~ 1056x1536 (w*h) => ~0.69.
+     * Goal:
+     * - Treat images as tall.
+     * - Keep tiles tall, avoid “fake squares”.
+     * - Use viewport efficiently while keeping them close together.
+     */
+    function computeComparisonLayout(count) {
+        const paddingTop = 4.5 * 16;   // match CSS: 4.5rem
+        const paddingBottom = 4.5 * 16;
+        const paddingSides = 1.5 * 16;
+
+        const viewportWidth = window.innerWidth - paddingSides * 2;
+        const viewportHeight = window.innerHeight - paddingTop - paddingBottom;
+
+        if (count <= 0 || viewportWidth <= 0 || viewportHeight <= 0) {
+            return {
+                cols: 1,
+                rows: 1,
+                cellWidth: viewportWidth,
+                cellHeight: viewportHeight
+            };
+        }
+
+        const targetImageAspect = 1056 / 1536; // ~0.6875 (portrait: w/h)
+        let best = null;
+
+        // Try all reasonable (cols, rows)
+        for (let cols = 1; cols <= count; cols++) {
+            const rows = Math.ceil(count / cols);
+            if (rows <= 0) continue;
+
+            // Raw cell size
+            const cellWidth = viewportWidth / cols;
+            const cellHeight = viewportHeight / rows;
+
+            // Effective displayed image aspect within this cell
+            const cellAspect = cellWidth / cellHeight;
+
+            // Score:
+            // - Maximize used area.
+            // - Prefer cell aspect close to target portrait (tall cells).
+            const area = cellWidth * cellHeight;
+            const aspectPenalty = Math.abs(Math.log((cellAspect || 1) / targetImageAspect));
+            const score = area / (1 + aspectPenalty * 1.5);
+
+            if (!best || score > best.score) {
+                best = { cols, rows, cellWidth, cellHeight, score };
+            }
+        }
+
+        return best || {
+            cols: 1,
+            rows: count,
+            cellWidth: viewportWidth,
+            cellHeight: viewportHeight / count
+        };
+    }
+
+    /**
+     * Apply absolute positioning so images behave like "sponges in a box":
+     * - JS decides exact tile rectangles.
+     * - Each image-container is the tile; each img is max-sized inside.
+     * - Uses tight gaps so images visually hug each other.
+     */
+    function layoutComparisonItems() {
+        const items = Array.from(document.querySelectorAll('.comparison-item'));
+        const count = items.length;
+        if (count === 0) return;
+
+        // Hard viewport box (respecting your UI chrome)
+        const paddingTop = 4.5 * 16;
+        const paddingBottom = 4.5 * 16;
+        const paddingSides = 1.5 * 16;
+        const gap = 4; // px gap between images, nothing more
+
+        const viewportWidth = window.innerWidth - paddingSides * 2;
+        const viewportHeight = window.innerHeight - paddingTop - paddingBottom;
+
+        const { cols, rows, cellWidth, cellHeight } = computeComparisonLayout(count);
+
+        // We will treat each tile as a strict portrait box:
+        // - target aspect from your source: 1056x1536 -> 0.6875
+        const targetAspect = 1056 / 1536;
+
+        // Effective tile sizes excluding gaps so images sit tight
+        const tileWidth = cellWidth - gap;
+        const tileHeight = tileWidth / targetAspect; // force portrait tile by width
+
+        // If forced tileHeight overflows available height, clamp by height instead
+        const maxTotalHeight = viewportHeight;
+        const rowsNeededHeight = rows * tileHeight + (rows - 1) * gap;
+        let finalTileWidth = tileWidth;
+        let finalTileHeight = tileHeight;
+
+        if (rowsNeededHeight > maxTotalHeight) {
+            // Constrain by height: recompute tile height so all rows fit;
+            // derive width from target aspect
+            finalTileHeight = (maxTotalHeight - (rows - 1) * gap) / rows;
+            finalTileWidth = finalTileHeight * targetAspect;
+        }
+
+        // Now recompute used size with final tile dimensions
+        const usedWidth = cols * finalTileWidth + (cols - 1) * gap;
+        const usedHeight = rows * finalTileHeight + (rows - 1) * gap;
+
+        // Center grid inside modal box
+        const offsetX = paddingSides + (viewportWidth - usedWidth) / 2;
+        const offsetY = paddingTop + (viewportHeight - usedHeight) / 2;
+
+        // comparisonGrid is a fixed canvas controlled ONLY here
+        comparisonGrid.style.position = 'fixed';
+        comparisonGrid.style.inset = '0';
+        comparisonGrid.style.padding = '0';
+        comparisonGrid.style.margin = '0';
+        comparisonGrid.style.overflow = 'hidden';
+
+        items.forEach((item, index) => {
+            const col = index % cols;
+            const row = Math.floor(index / cols);
+
+            const x = offsetX + col * (finalTileWidth + gap);
+            const y = offsetY + row * (finalTileHeight + gap);
+
+            // Strict tile rect
+            item.style.position = 'absolute';
+            item.style.boxSizing = 'border-box';
+            item.style.left = `${x}px`;
+            item.style.top = `${y}px`;
+            item.style.width = `${finalTileWidth}px`;
+            item.style.height = `${finalTileHeight}px`;
+            item.style.margin = '0';
+            item.style.padding = '0';
+            item.style.display = 'block';
+
+            // Image container EXACTLY equals tile, no flex nonsense
+            const container = item.querySelector('.image-container');
+            if (container) {
+                container.style.position = 'relative';
+                container.style.left = '0';
+                container.style.top = '0';
+                container.style.width = `${finalTileWidth}px`;
+                container.style.height = `${finalTileHeight}px`;
+                container.style.margin = '0';
+                container.style.padding = '0';
+                container.style.display = 'block';
+                container.style.overflow = 'hidden';
+            }
+
+            const img = item.querySelector('img');
+            if (img) {
+                // Hard, static size to match the tile. No auto, no 100% both sides.
+                img.style.position = 'absolute';
+                img.style.left = '0';
+                img.style.top = '0';
+                img.style.width = `${finalTileWidth}px`;
+                img.style.height = `${finalTileHeight}px`;
+                img.style.objectFit = 'contain';
+                img.style.margin = '0';
+                img.style.padding = '0';
+                img.style.maxWidth = 'none';
+                img.style.maxHeight = 'none';
+                img.style.display = 'block';
+            }
+
+            // Tooltip: pinned to this tile so it cannot drift
+            const tooltip = item.querySelector('.metadata-tooltip');
+            if (tooltip && container) {
+                tooltip.style.position = 'absolute';
+                tooltip.style.right = '1rem';
+                tooltip.style.left = '1rem';
+                tooltip.style.bottom = '1rem';
+                tooltip.style.maxWidth = `${finalTileWidth - 12}px`;
+            }
+        });
+    }
+
+    /**
+     * Render the comparison view:
+     * - One item per queued album.
+     * - Starting image index = globalImageIndex (supports sharing).
+     * - Then we delegate exact positioning/sizing to layoutComparisonItems().
      */
     function showComparisonView() {
         if (queue.length < 2) {
@@ -1054,7 +1233,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Set initial state and disable navigation until images are loaded
         isLoadingImages = true;
         setNavigationEnabled(false);
         currentLoadingIndex = 0;
@@ -1062,18 +1240,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         maxImagesInQueue = Math.max(0, ...queue.map(album => album.imageUrls.length));
 
         comparisonGrid.innerHTML = '';
-        comparisonGrid.removeAttribute('style');
 
         let imagesToLoad = queue.length;
         let imagesLoaded = 0;
 
-        // Callback to run after each image finishes loading (or fails)
         const onImageDone = () => {
             imagesLoaded++;
             if (imagesLoaded >= imagesToLoad) {
                 isLoadingImages = false;
-                // Enable navigation only after all initial images are loaded
                 setNavigationEnabled(true);
+                layoutComparisonItems(); // run layout when all current images are ready
             }
         };
 
@@ -1082,9 +1258,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             item.className = 'comparison-item';
             item.dataset.queueIndex = queueIndex;
 
-            // Determine the correct starting image URL based on globalImageIndex (for shared URLs)
-            const imageIndexForThisAlbum = album.imageUrls.length > 0 ? globalImageIndex % album.imageUrls.length : 0;
-            const imageUrl = album.imageUrls.length > 0 ? album.imageUrls[imageIndexForThisAlbum] : '';
+            const imageIndexForThisAlbum = album.imageUrls.length > 0
+                ? globalImageIndex % album.imageUrls.length
+                : 0;
+            const imageUrl = album.imageUrls.length > 0
+                ? album.imageUrls[imageIndexForThisAlbum]
+                : '';
 
             item.innerHTML = `
                 <div class="image-container">
@@ -1096,44 +1275,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const img = item.querySelector('.comparison-lazy-image');
             const skeleton = item.querySelector('.comparison-skeleton-loader');
-
-            img.onload = () => {
-                img.classList.add('loaded');
-                if (skeleton) {
-                    setTimeout(() => {
-                        skeleton.style.display = 'none';
-                    }, 400);
-                }
-                onImageDone();
-            };
-
-            img.onerror = () => {
-                // Handle error but still count as "done" to unblock navigation
-                if (skeleton) {
-                    skeleton.style.display = 'none';
-                }
-                onImageDone();
-            };
-
-            // Start loading the image
-            img.src = imageUrl;
-
-            // Add hover event listener to load metadata on demand
             const imageContainer = item.querySelector('.image-container');
+
+            // Metadata on-demand for each item (tooltip created once)
             item.metadataLoaded = false;
             item.addEventListener('mouseenter', () => {
                 if (!item.metadataLoaded) {
-                    const currentImageUrl = item.querySelector('img')?.dataset.src;
+                    const currentImageUrl = img.dataset.src;
                     if (currentImageUrl) {
                         item.metadataLoaded = true;
                         loadMetadataForImage(imageContainer, currentImageUrl);
                     }
                 }
             });
+
+            img.onload = () => {
+                img.classList.add('loaded');
+                if (skeleton) {
+                    setTimeout(() => {
+                        skeleton.style.display = 'none';
+                    }, 200);
+                }
+                onImageDone();
+            };
+
+            img.onerror = () => {
+                if (skeleton) {
+                    skeleton.style.display = 'none';
+                }
+                onImageDone();
+            };
+
+            // Kick off loading
+            img.src = imageUrl;
         });
 
         updateGlobalCounter();
         comparisonModal.classList.remove('opacity-0', 'pointer-events-none');
+
+        // Also re-layout on resize while modal is open
+        const handleResize = () => {
+            if (comparisonModal.classList.contains('pointer-events-none')) return;
+            layoutComparisonItems();
+        };
+        window.addEventListener('resize', handleResize, { passive: true });
+
+        // Store so we can remove on close if desired
+        comparisonModal._resizeHandler = handleResize;
     }
 
     /**
@@ -1188,7 +1376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
      */
     function updateAllComparisonImages(newIndex) {
         if (newIndex < 0 || newIndex >= maxImagesInQueue || isLoadingImages) {
-            return; // Prevent navigation if out of bounds or already loading
+            return;
         }
 
         globalImageIndex = newIndex;
@@ -1204,6 +1392,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (imagesLoaded >= imagesToLoad) {
                 isLoadingImages = false;
                 setNavigationEnabled(true);
+                layoutComparisonItems(); // keep layout tight after images swap
             }
         };
 
@@ -1212,13 +1401,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const imageContainer = item.querySelector('.image-container');
             const skeleton = imageContainer.querySelector('.comparison-skeleton-loader');
 
-            // --- FIX: Cancel any previously scheduled timers for this specific item ---
             if (item.hideSkeletonTimeout) {
                 clearTimeout(item.hideSkeletonTimeout);
             }
-            // --- END FIX ---
 
-            imageContainer.querySelector('.metadata-tooltip')?.remove();
+            // Remove previous tooltip, will be lazy-loaded again
+            const existingTooltip = imageContainer.querySelector('.metadata-tooltip');
+            if (existingTooltip) existingTooltip.remove();
             item.metadataLoaded = false;
 
             img.classList.remove('loaded');
@@ -1227,36 +1416,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 skeleton.style.display = 'block';
                 skeleton.style.opacity = '1';
             }
-            const skeletonShowTime = Date.now();
+            const start = Date.now();
 
             const onImageLoad = () => {
-                const elapsedTime = Date.now() - skeletonShowTime;
-                const remainingTime = Math.max(0, MIN_SKELETON_TIME - elapsedTime);
+                const elapsed = Date.now() - start;
+                const remaining = Math.max(0, MIN_SKELETON_TIME - elapsed);
 
                 setTimeout(() => {
                     img.classList.add('loaded');
-
-                    // Schedule the skeleton to be hidden, and store the timer ID
                     item.hideSkeletonTimeout = setTimeout(() => {
-                        if (skeleton) {
-                            skeleton.style.display = 'none';
-                        }
-                    }, 400); // Match CSS transition duration
-
+                        if (skeleton) skeleton.style.display = 'none';
+                    }, 200);
                     checkAllLoaded();
-                }, remainingTime);
+                }, remaining);
             };
 
             img.onload = onImageLoad;
             img.onerror = () => {
-                if (skeleton) {
-                    skeleton.style.display = 'none';
-                }
+                if (skeleton) skeleton.style.display = 'none';
                 checkAllLoaded();
             };
 
             const queueIndex = parseInt(item.dataset.queueIndex, 10);
             const album = queue[queueIndex];
+
             if (album && album.imageUrls.length > 0) {
                 const imageIndexForThisAlbum = globalImageIndex % album.imageUrls.length;
                 const newImageUrl = album.imageUrls[imageIndexForThisAlbum];

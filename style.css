@@ -302,182 +302,218 @@
     background: #4f46e5;
 }
 
-/* --- FINAL FLEXBOX COMPARISON STYLES (REVISED FOR MAX-FIT CONTAIN) --- */
-/*
-Core idea:
-- Modal body (comparison-grid) fills all available viewport minus top/bottom UI.
-- Each .comparison-item flexes so all items fit without overlap or scroll when reasonable.
-- Images use object-fit: contain to preserve aspect ratio.
-- We compute available height in CSS via viewport units and paddings.
+/* =========================================================
+   COMPARISON MODAL LAYOUT — MAX-FILL "SPONGES IN A BOX"
+   =========================================================
+   Principles:
+   - The comparison modal is a full-screen box.
+   - All comparison images are "sponges":
+       * They expand uniformly to occupy as much space as possible.
+       * They never overflow the viewport.
+       * They always preserve aspect ratio.
+   - Layout adapts purely to:
+       * Number of images (N).
+       * Viewport dimensions.
+   - Behavior:
+       * N = 1 → one huge centered image.
+       * N = 2 → two huge images, tight side-by-side near center.
+       * N = 3–4 → 2x2-type layouts, all large.
+       * N > 4 → more rows/columns, still centered; scroll only on extreme cases.
 */
 
+/* Modal: full-screen overlay managed via Tailwind utility classes */
 #comparison-modal {
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 
-/* Fill viewport minus nav/close button area; center content; allow scroll only if strictly necessary */
+/* Comparison grid:
+   - Uses flexbox as a dense, centered "image wall"
+   - The cluster of tiles is centered both horizontally and vertically
+   - Gaps are minimal so images sit tightly together
+*/
 #comparison-grid {
-    position: absolute;
-    inset: 0;
-    padding: 4.5rem 1.5rem 4.5rem; /* top/bottom leave room for close button + navigation */
+    flex: 1 1 auto;
+    box-sizing: border-box;
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    /* Reserve space for close button (top) and global nav (bottom) */
+    padding: 4.5rem 1.5rem 4.5rem;
+
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 1.5rem;
-    overflow: auto;
+    justify-content: center;   /* center cluster horizontally */
+    align-content: center;     /* center cluster vertically (multi-row) */
+    gap: 0.35rem;              /* tight but visible separation */
+
+    overflow: hidden;          /* avoid scroll unless on small screens */
     scroll-behavior: smooth;
-    box-sizing: border-box;
 }
 
-@media (min-width: 1601px) {
-    #comparison-grid:has(> .comparison-item:nth-last-child(2):first-child) .comparison-item {
-        max-width: calc(92vh/1.46);
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(3):first-child) .comparison-item {
-        max-width: 32%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(4):first-child) .comparison-item {
-        max-width: 24%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-child(5)) .comparison-item {
-        max-width: 450px;
-        flex: 1 1 25%;
-    }
-}
-@media (max-width: 1600px) {
-    #comparison-grid:has(> .comparison-item:nth-last-child(2):first-child) .comparison-item {
-        max-width: calc(92vh/1.46);
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(3):first-child) .comparison-item {
-        max-width: 32%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(4):first-child) .comparison-item {
-        max-width: 460px;
-        flex: min-content;
-    }
-    #comparison-grid:has(> .comparison-item:nth-child(5)) .comparison-item {
-        max-width: 450px;
-        flex: 1 1 25%;
-    }
-}
-@media (max-width: 1200px) {
-    #comparison-grid:has(> .comparison-item:nth-last-child(2):first-child) .comparison-item {
-        max-width: 49%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(3):first-child) .comparison-item {
-        max-width: 32%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(4):first-child) .comparison-item {
-        max-width: 460px;
-        flex: 1 1 405px;
-    }
-    #comparison-grid:has(> .comparison-item:nth-child(5)) .comparison-item {
-        max-width: 450px;
-        flex: 1 1 24%;
-    }
-}
-@media (max-width: 860px) {
-    #comparison-grid:has(> .comparison-item:nth-last-child(2):first-child) .comparison-item {
-        max-width: 47%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(3):first-child) .comparison-item {
-        max-width: 100%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(4):first-child) .comparison-item {
-        max-width: 49%;
-        flex: 1 1 45%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-child(5)) .comparison-item {
-        max-width: 405px;
-        flex: 1 1 220px;
-    }
-}
-@media (max-width: 700px) {
-    #comparison-grid:has(> .comparison-item:nth-last-child(2):first-child) .comparison-item {
-        max-width: 100%;
-        flex: 1 1 50%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(3):first-child) .comparison-item {
-        max-width: 100%;
-        flex: 1 1 50%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-last-child(4):first-child) .comparison-item {
-        max-width: 100%;
-        flex: 1 1 50%;
-    }
-    #comparison-grid:has(> .comparison-item:nth-child(5)) .comparison-item {
-        max-width: 100%;
-        flex: 1 1 50%;
+/* Small screens: permit scroll instead of breaking layout */
+@media (max-width: 640px) {
+    #comparison-grid {
+        overflow: auto;  /* allow scroll on very small screens */
+        align-content: flex-start;
+        padding-bottom: 6rem; /* keep nav tappable */
     }
 }
 
+/* Base comparison tile:
+   - Flexible portrait-ish cell; real size is governed by N-sensitive rules below
+*/
 .comparison-item {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    min-width: 0;
     min-height: 0;
-
-    /*
-    Let items shrink to fit many columns, and grow when there are few.
-    The max-height is tied to viewport so items never exceed screen vertically.
-    */
-    flex: 1 1 min(22vw, 420px);
-    max-width: min(24vw, 480px);
-    max-height: calc(100vh - 8rem); /* nav + padding + close button clearance */
+    gap: 0.15rem;
+    align-items: stretch;
 }
 
+/*
+Core sizing strategy (pure CSS heuristic):
+
+We assume images are mostly portrait.
+
+We size by N (number of items) using structural selectors:
+
+N = 1: huge, centered.
+N = 2: two big, tight in center.
+N = 3: three across.
+N = 4: 2x2.
+N = 5–6: two rows of ~3.
+N >= 7: smaller tiles, multiple rows, still centered.
+This ensures:
+
+Maximum use of viewport.
+Tight cluster around center.
+No square forcing; always portrait-ish. */
+/* 1 image: dominate viewport center */
+#comparison-grid > .comparison-item:only-child {
+flex: 0 0 auto;
+height: min(88vh, 88vw * 1.6);
+width: auto;
+max-width: 90vw;
+margin: 0 auto;
+}
+
+/* 2 images total: two large portraits side-by-side near center */
+#comparison-grid > .comparison-item:nth-child(1):nth-last-child(2),
+#comparison-grid > .comparison-item:nth-child(2):nth-last-child(1) {
+flex: 0 0 auto;
+height: min(88vh, 44vw * 1.6);
+width: min(44vw, 40vh);
+}
+
+/* 3 images total: three across */
+#comparison-grid > .comparison-item:nth-child(1):nth-last-child(3),
+#comparison-grid > .comparison-item:nth-child(2):nth-last-child(2),
+#comparison-grid > .comparison-item:nth-child(3):nth-last-child(1) {
+flex: 0 0 auto;
+height: min(82vh, 30vw * 1.6);
+width: min(30vw, 36vh);
+}
+
+/* 4 images total: 2x2, still large */
+#comparison-grid > .comparison-item:nth-child(1):nth-last-child(4),
+#comparison-grid > .comparison-item:nth-child(2):nth-last-child(3),
+#comparison-grid > .comparison-item:nth-child(3):nth-last-child(2),
+#comparison-grid > .comparison-item:nth-child(4):nth-last-child(1) {
+flex: 0 0 auto;
+height: min(72vh, 24vw * 1.6);
+width: min(24vw, 32vh);
+}
+
+/* 5–6 images: two rows, centered and readable */
+#comparison-grid > .comparison-item:nth-child(1):nth-last-child(5),
+#comparison-grid > .comparison-item:nth-child(2):nth-last-child(4),
+#comparison-grid > .comparison-item:nth-child(3):nth-last-child(3),
+#comparison-grid > .comparison-item:nth-child(4):nth-last-child(2),
+#comparison-grid > .comparison-item:nth-child(5):nth-last-child(1),
+#comparison-grid > .comparison-item:nth-child(1):nth-last-child(6),
+#comparison-grid > .comparison-item:nth-child(2):nth-last-child(5),
+#comparison-grid > .comparison-item:nth-child(3):nth-last-child(4),
+#comparison-grid > .comparison-item:nth-child(4):nth-last-child(3),
+#comparison-grid > .comparison-item:nth-child(5):nth-last-child(2),
+#comparison-grid > .comparison-item:nth-child(6):nth-last-child(1) {
+flex: 0 0 auto;
+height: min(60vh, 20vw * 1.6);
+width: min(20vw, 26vh);
+}
+
+/* 7+ images: compact tiles; cluster remains centered */
+#comparison-grid > .comparison-item:nth-child(1):nth-last-child(n+7),
+#comparison-grid > .comparison-item:nth-child(2):nth-last-child(n+6),
+#comparison-grid > .comparison-item:nth-child(3):nth-last-child(n+5),
+#comparison-grid > .comparison-item:nth-child(4):nth-last-child(n+4),
+#comparison-grid > .comparison-item:nth-child(5):nth-last-child(n+3),
+#comparison-grid > .comparison-item:nth-child(6):nth-last-child(n+2),
+#comparison-grid > .comparison-item:nth-child(7):nth-last-child(n+1),
+#comparison-grid > .comparison-item:nth-child(n+8) {
+flex: 0 0 auto;
+height: min(50vh, 16vw * 1.6);
+width: min(16vw, 22vh);
+}
+
+/* Image container: fill tile and center image; host for tooltip */
 .comparison-item .image-container {
-    flex-grow: 1;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
 }
 
+/* Image: true "sponge in a box"
+   - Uses all available cell space
+   - Preserves aspect ratio
+   - Never cropped
+   - Does NOT stretch horizontally beyond its cell
+*/
 .comparison-item img {
+    display: block;
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain; /* preserve aspect ratio and never overflow container */
+    width: auto;          /* let JS-defined cell size + object-fit handle it */
+    height: 100%;         /* fill tile height, keep ratio via contain */
+    object-fit: contain;
     position: relative;
     z-index: 1;
+    margin: 0 auto;
 }
 
-/* Skeleton loader for comparison images
-   Match the container area but stay under the image (z-index 0),
-   so the eventual image (z-index 1) is always visible and clipped correctly.
-*/
+/* Skeleton loader: follows tile bounds, does not enforce square */
 .comparison-skeleton-loader {
-    position: absolute;
-    inset: 0.75rem;
-    overflow: hidden;
-    background-color: #4f5570;
-    border-radius: 0.5rem;
-    z-index: 0;
+position: absolute;
+inset: 0.12rem;
+overflow: hidden;
+background-color: #4f5570;
+border-radius: 0.4rem;
+z-index: 0;
 }
 
 .dark .comparison-skeleton-loader {
-    background-color: #374151;
+background-color: #374151;
 }
 
 .comparison-skeleton-loader::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
-    animation: shimmer 1.5s infinite;
+content: '';
+position: absolute;
+inset: 0;
+background: linear-gradient(90deg,
+rgba(255, 255, 255, 0) 0%,
+rgba(255, 255, 255, 0.2) 50%,
+rgba(255, 255, 255, 0) 100%);
+animation: shimmer 1.5s infinite;
 }
 
 .dark .comparison-skeleton-loader::after {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%);
+background: linear-gradient(90deg,
+rgba(255, 255, 255, 0) 0%,
+rgba(255, 255, 255, 0.05) 50%,
+rgba(255, 255, 255, 0) 100%);
 }
+
+/* Keep global navigation styles below as you already had */
 
 /* Hide the old individual navigation */
 .comparison-item .navigation {
@@ -886,34 +922,48 @@ Core idea:
     z-index: 100;
 }
 
-/* Metadata tooltip styles */
+/* Metadata tooltip:
+   - Attached to each image-container
+   - Big enough to be readable
+   - Only visible on hover; does not affect layout
+*/
 .metadata-tooltip {
     position: absolute;
-    bottom: 0.5rem;
-    left: 0.5rem;
-    right: 0.5rem;
-    background: rgba(0, 0, 0, 0.92);
-    backdrop-filter: blur(8px);
-    border-radius: 0.5rem;
-    padding: 0.75rem;
-    color: white;
-    font-size: 0.75rem;
-    line-height: 1.4;
+    right: 1rem;
+    left: 1rem;
+    bottom: 1rem;
+    max-width: 100%;
+    background: rgba(0, 0, 0, 0.96);
+    backdrop-filter: blur(12px);
+    border-radius: 1rem;
+    padding: 0.75rem 1rem;
+    color: #f9fafb;
+    font-size: 0.78rem;
+    line-height: 1.45;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease-in-out;
-    z-index: 10;
-    max-height: 80%;
+    transform: translateY(4px);
+    transition: opacity 0.16s ease-out, transform 0.16s ease-out;
+    z-index: 40;
+    max-height: 70vh;
     overflow-y: auto;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(129, 140, 248, 0.4);
 }
 
-/* Adjust metadata size for smaller grids */
+/* Show metadata only when hovering that specific comparison item */
+.comparison-item:hover .metadata-tooltip {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+/* Slightly adjust tooltip text for extremely dense layouts (if those classes appear) */
 .comparison-grid.grid-cols-6 .metadata-tooltip,
 .comparison-grid.grid-cols-7 .metadata-tooltip,
 .comparison-grid.grid-cols-8 .metadata-tooltip {
-    font-size: 0.65rem;
-    padding: 0.5rem;
+    font-size: 0.7rem;
+    padding: 0.65rem 0.8rem;
 }
 
 .comparison-grid.grid-cols-6 .metadata-label,
@@ -939,6 +989,13 @@ Core idea:
 .comparison-item:hover .metadata-tooltip {
     opacity: 1;
     pointer-events: auto;
+}
+
+/* Hover behavior: only for the hovered image's tooltip */
+.comparison-item:hover .metadata-tooltip {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 .metadata-tooltip::-webkit-scrollbar {
