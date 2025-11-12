@@ -1588,8 +1588,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     sessionStorage.removeItem('pendingSharedComparison');
                     const shareData = JSON.parse(pendingShare);
 
-
-                    const shareUrl = `${window.location.origin}${window.location.pathname}?share=${encodeURIComponent(btoa(JSON.stringify(shareData)))}`;
+                    // Corrected line:
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?compare=${encodeURIComponent(btoa(JSON.stringify(shareData)))}`;
                     window.location.href = shareUrl;
                 }
             }, 1000);
