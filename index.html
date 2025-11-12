@@ -6,60 +6,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Slop Comparison</title>
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
-    <!-- ExifReader: A robust metadata reader that supports both tEXt and iTXt chunks -->
+
     <script src="https://cdn.jsdelivr.net/npm/exifreader@4.32.0/dist/exif-reader.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 h-screen overflow-hidden">
 
-    <!-- Backdrop for Detail View -->
+
     <div id="detail-backdrop" class="absolute inset-0 bg-gray-900/70 backdrop-blur-sm z-20"></div>
 
-    <!-- App Blocking Loading Overlay + Status -->
-    <div id="app-blocking-overlay" class="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="overlay-content flex flex-col items-center text-center space-y-4 p-8 rounded-2xl bg-gray-900/70 border border-gray-700 shadow-2xl">
-            <div class="overlay-spinner w-12 h-12 border-4 border-gray-600 border-t-indigo-500 rounded-full animate-spin"></div>
+
+    <div id="app-blocking-overlay"
+        class="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div
+            class="overlay-content flex flex-col items-center text-center space-y-4 p-8 rounded-2xl bg-gray-900/70 border border-gray-700 shadow-2xl">
+            <div
+                class="overlay-spinner w-12 h-12 border-4 border-gray-600 border-t-indigo-500 rounded-full animate-spin">
+            </div>
             <p id="overlay-message" class="text-gray-100 text-lg font-medium">Loading…</p>
         </div>
     </div>
 
-    <!-- Toasts -->
+
     <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[210] space-y-3"></div>
 
-    <!-- Floating Action Buttons Container -->
+
     <div class="fixed bottom-6 right-6 z-10 flex flex-col items-center space-y-4">
 
-        <!-- Floating Queue Button -->
+
         <button id="queue-button"
             class="floating-button bg-gradient-to-br from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-110 opacity-0 pointer-events-none scale-95">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                </path>
             </svg>
             <span id="queue-count"
                 class="absolute -top-1 -right-1 bg-gradient-to-br from-yellow-400 to-orange-500 text-gray-900 text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-gray-900 shadow-md">0</span>
         </button>
 
-        <!-- Floating Menu Button -->
+
         <button id="menu-button"
             class="floating-button bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
             </svg>
         </button>
 
     </div>
 
-    <!-- Centered Popup Menu -->
+
     <div id="popup-menu-overlay"
         class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md z-50 flex items-center justify-center text-center p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
         <div
             class="premium-modal bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl w-full max-w-sm transform scale-95 transition-all duration-300">
-            <!-- Main Menu View -->
+
             <div id="popup-menu">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">Menu</h2>
+                        <h2
+                            class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+                            Menu</h2>
                         <button id="close-menu-button"
                             class="icon-button text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-all">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -78,11 +88,13 @@
                     </nav>
                 </div>
             </div>
-            <!-- Settings View -->
+
             <div id="settings-view" class="hidden">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">Settings</h2>
+                        <h2
+                            class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+                            Settings</h2>
                         <button id="back-to-menu-button"
                             class="icon-button text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -116,11 +128,13 @@
                     </div>
                 </div>
             </div>
-            <!-- Create Album View -->
+
             <div id="create-album-view" class="hidden">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">Create New Album</h2>
+                        <h2
+                            class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+                            Create New Album</h2>
                         <button id="back-to-menu-from-create-button"
                             class="icon-button text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -166,45 +180,57 @@
         </div>
     </div>
 
-    <!-- Queue Menu Overlay -->
+
     <div id="queue-menu-overlay"
         class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md z-40 flex items-center justify-center text-center p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
         <div
             class="premium-modal bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl w-full max-w-md transform scale-95 transition-all duration-300 p-6">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">Comparison Queue</h2>
-                <button id="close-queue-menu-button" class="icon-button text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                <h2
+                    class="text-2xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                    Comparison Queue</h2>
+                <button id="close-queue-menu-button"
+                    class="icon-button text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </button>
             </div>
             <div id="queue-list" class="space-y-3 text-left max-h-[50vh] overflow-y-auto pr-2 queue-list-scroll">
-                <!-- Queued albums will be dynamically inserted here -->
+
             </div>
             <div class="flex space-x-4 mt-6">
-                <button id="clear-queue-button" class="danger-button w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-lg transition-all">Clear All</button>
-                <button id="compare-button" class="premium-button w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-all">Compare</button>
+                <button id="clear-queue-button"
+                    class="danger-button w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-lg transition-all">Clear
+                    All</button>
+                <button id="compare-button"
+                    class="premium-button w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-all">Compare</button>
             </div>
         </div>
     </div>
 
     <main class="flex flex-col h-full w-full mx-auto py-10" style="max-width: 1920px;">
-        <!-- Search -->
+
         <div id="search-wrapper" class="flex-shrink-0">
-            <h1 class="premium-title text-5xl font-bold mb-4 text-center bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent drop-shadow-lg">AI Slop Collection</h1>
+            <h1
+                class="premium-title text-5xl font-bold mb-4 text-center bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent drop-shadow-lg">
+                AI Slop Collection</h1>
             <div class="relative search-container">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 z-10"><svg class="h-5 w-5 text-indigo-500 dark:text-purple-400"
-                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 z-10"><svg
+                        class="h-5 w-5 text-indigo-500 dark:text-purple-400" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd"
                             d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
                             clip-rule="evenodd" />
                     </svg></span>
                 <input id="search-input" type="text" placeholder="Search albums by title..."
                     class="premium-search-input w-full pl-10 pr-10 py-3 border-2 border-gray-700 rounded-lg bg-gray-800 focus:ring-indigo-500 focus:border-indigo-500 text-white">
-                <button id="clear-search-button" class="clear-search-btn absolute inset-y-0 right-0 flex items-center pr-3 hidden transition-all"><svg
-                        class="h-5 w-5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20" fill="currentColor">
+                <button id="clear-search-button"
+                    class="clear-search-btn absolute inset-y-0 right-0 flex items-center pr-3 hidden transition-all"><svg
+                        class="h-5 w-5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd"
                             d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                             clip-rule="evenodd" />
@@ -216,84 +242,95 @@
         </div>
 
         <div class="relative flex-grow min-h-0">
-            <!-- Albums Grid -->
-            <div id="albums-grid"
-                class="flex flex-wrap gap-6 h-full w-full overflow-y-auto p-6 justify-center">
-                <!-- Album cards will be dynamically inserted here -->
+
+            <div id="albums-grid" class="flex flex-wrap gap-6 h-full w-full overflow-y-auto p-6 justify-center">
+
             </div>
 
-            <!-- MODIFIED Album Detail Container -->
+
             <div id="album-detail-container" class="p-4 z-30">
                 <div
                     class="premium-detail-card bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-lg shadow-2xl border-2 border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[20vh]">
-                    <!-- Image Gallery (37.5% width) -->
+
                     <div id="detail-image-gallery" class="grid grid-cols-3 gap-4 h-full md:col-span-5">
-                        <!-- Images and placeholders will be dynamically inserted here -->
+
                     </div>
 
-                    <!-- Album Info (50% width) -->
+
                     <div class="flex flex-col overflow-hidden md:col-span-6">
                         <div class="flex justify-between items-start mb-4">
-                            <h3 id="detail-title" class="detail-title text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent"></h3>
-                            <p id="detail-image-count" class="premium-badge text-md text-indigo-600 dark:text-indigo-400 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900 px-3 py-1 rounded-full border-2 border-indigo-200 dark:border-indigo-700 font-medium"></p>
+                            <h3 id="detail-title"
+                                class="detail-title text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                            </h3>
+                            <p id="detail-image-count"
+                                class="premium-badge text-md text-indigo-600 dark:text-indigo-400 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900 px-3 py-1 rounded-full border-2 border-indigo-200 dark:border-indigo-700 font-medium">
+                            </p>
                         </div>
                         <div id="detail-description"
                             class="detail-description text-gray-700 dark:text-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/70 dark:to-gray-800/70 p-4 rounded-lg overflow-y-auto flex-grow border border-gray-200 dark:border-gray-700">
-                            <!-- Description will be inserted here -->
+
                         </div>
                     </div>
 
-                    <!-- Add/Remove Button Container -->
-                    <div id="detail-action-button-container" class="flex items-center justify-end md:col-span-1 detail-action-container">
-                        <!-- The + or - button will be inserted here by script.js -->
+
+                    <div id="detail-action-button-container"
+                        class="flex items-center justify-end md:col-span-1 detail-action-container">
+
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-<!-- MODIFIED Comparison Modal -->
-<div id="comparison-modal"
-    class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
 
-    <!-- Close Button -->
-    <button id="close-comparison-button"
-        class="comparison-close-button absolute top-4 right-4 text-white/90 hover:text-white transition-all bg-gray-900/60 hover:bg-red-600/80 rounded-full z-10 p-2">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-    </button>
+    <div id="comparison-modal"
+        class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
 
-    <!-- Comparison Grid -->
-    <div id="comparison-grid" class="w-full h-full min-h-0">
-        <!-- Comparison items will be dynamically inserted here -->
-    </div>
 
-    <!-- NEW Global Navigation with Share Button -->
-    <div class="navigation-container">
-        <!-- Share Button - positioned to the right of navigation -->
-        <button id="share-comparison-btn" class="nav-share-button">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+        <button id="close-comparison-button"
+            class="comparison-close-button absolute top-4 right-4 text-white/90 hover:text-white transition-all bg-gray-900/60 hover:bg-red-600/80 rounded-full z-10 p-2">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
-            <span class="nav-share-button-text">Share</span>
         </button>
 
-        <!-- Centered Navigation -->
-        <div id="comparison-navigation" class="comparison-navigation">
-            <button id="global-prev-btn" class="nav-button">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+
+        <div id="comparison-grid" class="w-full h-full min-h-0">
+
+        </div>
+
+
+        <div class="navigation-container">
+
+            <button id="share-comparison-btn" class="nav-share-button">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z">
+                    </path>
+                </svg>
+                <span class="nav-share-button-text">Share</span>
             </button>
-            <div class="navigation-counter">
-                <span id="global-image-counter-current">1</span> / <span id="global-image-counter-total">?</span>
+
+
+            <div id="comparison-navigation" class="comparison-navigation">
+                <button id="global-prev-btn" class="nav-button">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
+                    </svg>
+                </button>
+                <div class="navigation-counter">
+                    <span id="global-image-counter-current">1</span> / <span id="global-image-counter-total">?</span>
+                </div>
+                <button id="global-next-btn" class="nav-button">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
             </div>
-            <button id="global-next-btn" class="nav-button">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-            </button>
         </div>
     </div>
-</div>
     <script src="script.js"></script>
 </body>
 

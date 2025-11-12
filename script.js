@@ -1,13 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // --- API Credentials ---
     let API_KEY = localStorage.getItem('API_KEY');
     let DB_URL = localStorage.getItem('DB_URL');
 
-    // --- Caching Album Data ---
     let albumCache = [];
     const albumsGrid = document.getElementById('albums-grid');
 
-    // --- Queue Management ---
     let queue = [];
     const queueButton = document.getElementById('queue-button');
     const queueCount = document.getElementById('queue-count');
@@ -18,7 +15,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const compareButton = document.getElementById('compare-button');
     const detailActionButtonContainer = document.getElementById('detail-action-button-container');
 
-    // --- MODIFIED Comparison Modal ---
     const comparisonModal = document.getElementById('comparison-modal');
     const closeComparisonButton = document.getElementById('close-comparison-button');
     const comparisonGrid = document.getElementById('comparison-grid');
@@ -28,22 +24,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const globalCounterCurrent = document.getElementById('global-image-counter-current');
     const globalCounterTotal = document.getElementById('global-image-counter-total');
 
-    // --- NEW Global State for Comparison ---
     let globalImageIndex = 0;
     let maxImagesInQueue = 0;
 
-    // --- URL Sharing State ---
     let isLoadingFromSharedUrl = false;
 
-    // ADD the following code right below it:
-    const MIN_SKELETON_TIME = 0; // Minimum time in ms to display skeleton
+    const MIN_SKELETON_TIME = 0;
 
-    /**
-     * Manages the lazy load transition for an image and its skeleton loader,
-     * ensuring the skeleton is displayed for a minimum amount of time.
-     * @param {HTMLImageElement} img The image element to load.
-     * @param {HTMLElement} skeleton The corresponding skeleton loader element.
-     */
     function manageLazyLoadTransition(img, skeleton) {
         const startTime = Date.now();
 
@@ -55,19 +42,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (img) {
                     img.classList.add('loaded');
                 }
-                // Hide the skeleton after the image has had time to fade in
                 if (skeleton) {
                     setTimeout(() => {
                         skeleton.style.opacity = '0';
                         setTimeout(() => skeleton.style.display = 'none', 300);
-                    }, 400); // This should match your .lazy-image transition duration
+                    }, 400);
                 }
             }, remainingTime);
         };
 
         img.onload = onImageLoad;
         img.onerror = () => {
-            // On error, just hide the skeleton immediately
             if (skeleton) {
                 skeleton.style.display = 'none';
             }
@@ -77,9 +62,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
-    /**
-     * A generic function to make calls to the REST API.
-     */
     async function apiCall(userApiKey, userDbUrl, endpoint = '', method = 'GET', body = null) {
         if (!userApiKey || !userDbUrl) {
             throw new Error('API Key or DB URL not provided.');
@@ -112,9 +94,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    /**
-     * Creates an HTML element for a single album.
-     */
     function createAlbumCard(album) {
         const card = document.createElement('div');
         card.className = 'album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer transition-transform hover:-translate-y-1 select-none';
@@ -137,12 +116,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return card;
     }
 
-    /**
-     * Fetches albums from the API and populates the grid.
-     */
     async function fetchAndDisplayAlbums() {
-        albumsGrid.innerHTML = ''; // Clear previous content
-        // Display skeleton loaders
+        albumsGrid.innerHTML = '';
         for (let i = 0; i < 8; i++) {
             const skeletonCard = document.createElement('div');
             skeletonCard.className = 'album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden';
@@ -169,9 +144,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    /**
-     * Initializes all interactive logic for album cards.
-     */
     function initializeAlbumCardLogic() {
         document.querySelectorAll('.album-card').forEach(card => {
             card.replaceWith(card.cloneNode(true));
@@ -198,7 +170,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const img = entry.target;
                         const skeleton = img.previousElementSibling;
                         if (skeleton && skeleton.classList.contains('skeleton-loader')) {
-                            // Use our new helper function
                             manageLazyLoadTransition(img, skeleton);
                         }
                         observer.unobserve(img);
@@ -219,7 +190,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
-    // --- Search Logic ---
     const searchInput = document.getElementById('search-input');
     const clearSearchButton = document.getElementById('clear-search-button');
     const suggestionsBox = document.getElementById('suggestions-box');
@@ -227,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const filterAlbums = (query) => {
         query = query.toLowerCase();
-        const transitionDuration = 300; // This must match the duration in your CSS
+        const transitionDuration = 300;
 
         albumCache.forEach(album => {
             const isVisible = album.title.includes(query);
@@ -235,14 +205,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isHidden = card.classList.contains('hidden-by-filter');
 
             if (isVisible && isHidden) {
-                // --- Animate IN ---
+
                 card.style.display = '';
                 setTimeout(() => {
                     card.classList.remove('hidden-by-filter');
                 }, 10);
 
             } else if (!isVisible && !isHidden) {
-                // --- Animate OUT ---
+
                 card.classList.add('hidden-by-filter');
                 setTimeout(() => {
                     card.style.display = 'none';
@@ -301,11 +271,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         clearSearchButton.classList.toggle('hidden', !query);
     });
 
-    // Keyboard navigation for search suggestions
     searchInput.addEventListener('keydown', (e) => {
         const suggestions = suggestionsBox.querySelectorAll('.suggestion-item');
         const suggestionsVisible = !suggestionsBox.classList.contains('hidden');
-        
+
         if (e.key === 'ArrowDown' && suggestionsVisible) {
             e.preventDefault();
             selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
@@ -350,7 +319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             selectedSuggestionIndex = -1;
         }
     });
-    
+
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.relative')) {
             suggestionsBox.classList.add('hidden');
@@ -358,7 +327,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // --- Dedicated Lazy Loader for Detail View Images ---
     const lazyLoadDetailImages = () => {
         const detailImages = document.querySelectorAll('#detail-image-gallery .lazy-image');
         detailImages.forEach(img => {
@@ -369,17 +337,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // --- Dedicated Lazy Loader for Comparison View Images ---
     const lazyLoadComparisonImages = () => {
         const comparisonImages = document.querySelectorAll('.comparison-lazy-image');
-        
+
         if ('IntersectionObserver' in window) {
             const comparisonObserver = new IntersectionObserver((entries, observer) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
                         const skeleton = img.previousElementSibling;
-                        
+
                         img.onload = () => {
                             img.classList.add('loaded');
                             if (skeleton && skeleton.classList.contains('comparison-skeleton-loader')) {
@@ -388,15 +355,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 }, 400);
                             }
                         };
-                        
+
                         img.onerror = () => {
-                            // Handle error - still hide skeleton
                             if (skeleton && skeleton.classList.contains('comparison-skeleton-loader')) {
                                 skeleton.style.display = 'none';
                             }
                             img.classList.add('loaded');
                         };
-                        
+
                         img.src = img.dataset.src;
                         observer.unobserve(img);
                     }
@@ -406,10 +372,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 rootMargin: '50px 0px',
                 threshold: 0.01
             });
-            
+
             comparisonImages.forEach(img => comparisonObserver.observe(img));
         } else {
-            // Fallback for browsers without IntersectionObserver
             comparisonImages.forEach(img => {
                 const skeleton = img.previousElementSibling;
                 img.onload = () => {
@@ -424,8 +389,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
     };
-
-    // --- Queue UI and Logic ---
 
     function updateGridQueueStyles() {
         const queuedIds = new Set(queue.map(album => album._id));
@@ -563,36 +526,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateDetailActionButton();
         updateGridQueueStyles();
     });
-    
+
     function hideComparisonView() {
         comparisonModal.classList.add('opacity-0', 'pointer-events-none');
     }
 
-    /**
-     * Generates a shareable URL for the current comparison state
-     */
     function generateShareableUrl() {
         const shareData = {
             db: DB_URL,
             albums: queue.map(album => album._id),
             page: globalImageIndex
         };
-        
-        // Encode to Base64 for compact URL
+
+
         const encoded = btoa(JSON.stringify(shareData));
         const baseUrl = window.location.origin + window.location.pathname;
         return `${baseUrl}?compare=${encodeURIComponent(encoded)}`;
     }
 
-    /**
-     * Copies the shareable URL to clipboard
-     */
     async function shareComparison() {
         try {
             const shareUrl = generateShareableUrl();
             await navigator.clipboard.writeText(shareUrl);
-            
-            // Show success feedback
+
+
             const shareBtn = document.getElementById('share-comparison-btn');
             const originalContent = shareBtn.innerHTML;
             shareBtn.innerHTML = `
@@ -603,7 +560,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
             shareBtn.classList.add('bg-green-600', 'hover:bg-green-700');
             shareBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-            
+
             setTimeout(() => {
                 shareBtn.innerHTML = originalContent;
                 shareBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
@@ -615,26 +572,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    /**
-     * Parses shared comparison URL parameters
-     */
     function parseSharedUrl() {
         const urlParams = new URLSearchParams(window.location.search);
         const compareParam = urlParams.get('compare');
-        
+
         if (!compareParam) {
             return null;
         }
-        
+
         try {
             const decoded = atob(decodeURIComponent(compareParam));
             const shareData = JSON.parse(decoded);
-            
-            // Validate structure
+
+
             if (!shareData.db || !Array.isArray(shareData.albums) || shareData.albums.length < 2) {
                 throw new Error('Invalid share data structure');
             }
-            
+
             return shareData;
         } catch (error) {
             console.error('Failed to parse shared URL:', error);
@@ -642,9 +596,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    /**
-     * App-blocking overlay for seamless status messages
-     */
     function showBlockingOverlay(message = 'Loading…') {
         const overlay = document.getElementById('app-blocking-overlay');
         const msg = document.getElementById('overlay-message');
@@ -665,9 +616,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         overlay.classList.add('pointer-events-none');
     }
 
-    /**
-     * Toast notifications for errors/warnings/info (non-blocking)
-     */
     function showToast(message, type = 'error') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -683,9 +631,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 4000);
     }
 
-    /**
-     * Loads a shared comparison from URL
-     */
     async function loadSharedComparison() {
         const shareData = (() => {
             const params = new URLSearchParams(window.location.search);
@@ -695,88 +640,88 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!parsed) {
                 hideBlockingOverlay();
                 showToast('Invalid or corrupted shared URL.', 'error');
-                // Clean URL
+
                 window.history.replaceState({}, document.title, window.location.pathname);
                 return null;
             }
             return parsed;
         })();
-        
+
         if (!shareData) {
-            return; // No valid shared URL, continue normal operation
+            return;
         }
-        
+
         isLoadingFromSharedUrl = true;
-        
-        // Check if DB endpoint matches
+
+
         updateBlockingOverlay('Validating database endpoint…');
         if (shareData.db !== DB_URL) {
             hideBlockingOverlay();
             showToast('Shared comparison uses a different database endpoint. Opening settings…', 'error');
-            
-            // Get menu elements and open settings
+
+
             const dbUrlInput = document.getElementById('db-url-input');
             const menuOverlay = document.getElementById('popup-menu-overlay');
             const popupMenuContainer = menuOverlay ? menuOverlay.querySelector('div') : null;
             const popupMenu = document.getElementById('popup-menu');
             const settingsView = document.getElementById('settings-view');
-            
-            // Pre-fill the database URL
+
+
             if (dbUrlInput) dbUrlInput.value = shareData.db;
-            
-            // Open settings menu
+
+
             if (menuOverlay && popupMenuContainer && popupMenu && settingsView) {
                 menuOverlay.classList.remove('opacity-0', 'pointer-events-none');
                 popupMenuContainer.classList.remove('scale-95');
                 popupMenu.classList.add('hidden');
                 settingsView.classList.remove('hidden');
             }
-            
+
             isLoadingFromSharedUrl = false;
-            
-            // Store the share data in sessionStorage to retry after settings are saved
+
+
             sessionStorage.setItem('pendingSharedComparison', JSON.stringify(shareData));
             return;
         }
-        
-        // Check if we have valid credentials
+
+
         if (!API_KEY || !DB_URL) {
             hideBlockingOverlay();
             showToast('Please configure your API credentials in settings first.', 'error');
-            
-            // Get menu elements
+
+
             const menuOverlay = document.getElementById('popup-menu-overlay');
             const popupMenuContainer = menuOverlay ? menuOverlay.querySelector('div') : null;
             const popupMenu = document.getElementById('popup-menu');
             const settingsView = document.getElementById('settings-view');
-            
-            // Open settings menu
+
+
             if (menuOverlay && popupMenuContainer && popupMenu && settingsView) {
                 menuOverlay.classList.remove('opacity-0', 'pointer-events-none');
                 popupMenuContainer.classList.remove('scale-95');
                 popupMenu.classList.add('hidden');
                 settingsView.classList.remove('hidden');
             }
-            
+
             isLoadingFromSharedUrl = false;
-            
-            // Store the share data to retry after settings are saved
+
+
             sessionStorage.setItem('pendingSharedComparison', JSON.stringify(shareData));
             return;
         }
-        
-        // Show loading status
+
+
         updateBlockingOverlay('Loading albums…');
-        
-        // Fetch albums and validate they exist
+
+
         try {
             const albums = await apiCall(API_KEY, DB_URL);
             const albumMap = new Map(albums.map(album => [album._id, album]));
-            
-            // Check which albums are available
+
+
             const availableAlbums = [];
             const missingAlbums = [];
-            
+
             for (const albumId of shareData.albums) {
                 if (albumMap.has(albumId)) {
                     availableAlbums.push(albumMap.get(albumId));
@@ -784,7 +729,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     missingAlbums.push(albumId);
                 }
             }
-            
+
             if (availableAlbums.length < 2) {
                 hideBlockingOverlay();
                 showToast(`Cannot load comparison: ${missingAlbums.length} album(s) not found in database.`, 'error');
@@ -792,28 +737,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                 isLoadingFromSharedUrl = false;
                 return;
             }
-            
-            // Warn about missing albums but continue
+
+
             if (missingAlbums.length > 0) {
                 showToast(`Warning: ${missingAlbums.length} album(s) from the shared comparison are not available.`, 'warning');
             }
-            
-            // Clear current queue and populate with shared albums
+
+
             queue = availableAlbums;
             updateQueueButton();
             updateGridQueueStyles();
-            
-            // Set the global image index
+
+
             globalImageIndex = shareData.page || 0;
-            
-            // Show comparison view
+
+
             hideBlockingOverlay();
             showComparisonView();
             isLoadingFromSharedUrl = false;
-            
-            // Clear URL parameter to avoid reloading on refresh
+
+
             window.history.replaceState({}, document.title, window.location.pathname);
-            
+
         } catch (error) {
             console.error('Failed to load shared comparison:', error);
             hideBlockingOverlay();
@@ -823,18 +768,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    /**
-     * Escapes HTML special characters to prevent XSS.
-     */
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
-    /**
-     * Extracts metadata from an image URL using ExifReader library.
-     */
     async function extractImageMetadata(imageUrl) {
         try {
             const metadata = await ExifReader.load(imageUrl);
@@ -845,25 +784,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    /**
-     * Parses LoRA tags from a string and formats them with colors.
-     * Format: <lora:name:weight:other_params> or <lora:name>
-     */
     function parseAndFormatLoras(lorasString) {
         if (!lorasString) return 'N/A';
-        
+
         const loraRegex = /<lora:([^:>]+)(?::([^:>]+))?[^>]*>/g;
         const matches = [];
         let match;
-        
+
         while ((match = loraRegex.exec(lorasString)) !== null) {
             const name = match[1];
             const weight = match[2];
             matches.push({ name, weight });
         }
-        
+
         if (matches.length === 0) return escapeHtml(lorasString);
-        
+
         return matches.map(lora => {
             const escapedName = escapeHtml(lora.name);
             const displayName = `<span style="color: #a78bfa; font-weight: 600;">${escapedName}</span>`;
@@ -872,48 +807,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).join(' → ');
     }
 
-    /**
-     * Parses checkpoint tags from a string and formats them with colors.
-     * Format: <checkpoint:name>
-     */
     function parseAndFormatCheckpoint(checkpointString) {
         if (!checkpointString) return 'N/A';
-        
+
         const checkpointRegex = /<checkpoint:([^>]+)>/g;
         const match = checkpointRegex.exec(checkpointString);
-        
+
         if (match) {
             return `<span style="color: #fbbf24; font-weight: 600;">${escapeHtml(match[1])}</span>`;
         }
-        
+
         return escapeHtml(checkpointString);
     }
 
-    /**
-     * Formats a metadata value for display.
-     */
     function formatMetadataValue(value, fieldKey) {
         if (value === null || value === undefined) return 'N/A';
         if (typeof value === 'object') return escapeHtml(JSON.stringify(value));
-        
+
         const stringValue = String(value);
-        
-        // Special formatting for LoRAs
+
+
         if (fieldKey === 'user_loras') {
             return parseAndFormatLoras(stringValue);
         }
-        
-        // Special formatting for checkpoint
+
+
         if (fieldKey === 'user_checkpoint') {
             return parseAndFormatCheckpoint(stringValue);
         }
-        
+
         return escapeHtml(stringValue);
     }
 
-    /**
-     * Copies text to clipboard and provides visual feedback.
-     */
     async function copyToClipboard(text, button) {
         try {
             await navigator.clipboard.writeText(text);
@@ -933,13 +858,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    /**
-     * Creates a metadata tooltip element with the extracted metadata.
-     */
     function createMetadataTooltip(metadata) {
         const tooltip = document.createElement('div');
         tooltip.className = 'metadata-tooltip';
-        
+
         if (!metadata) {
             tooltip.innerHTML = '<div class="metadata-no-data">No metadata available</div>';
             return tooltip;
@@ -964,8 +886,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (value !== null && value !== undefined) {
                 hasData = true;
                 const formattedValue = formatMetadataValue(value, field.key);
-                const rawValue = String(value); // Keep raw value for copying
-                
+                const rawValue = String(value);
+
                 if (field.isPrompt && formattedValue !== 'N/A') {
                     htmlContent += `
                         <div class="metadata-row">
@@ -996,8 +918,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             tooltip.innerHTML = '<div class="metadata-no-data">No metadata available</div>';
         } else {
             tooltip.innerHTML = htmlContent;
-            
-            // Add click handlers for copy buttons after tooltip is created
+
+
             setTimeout(() => {
                 tooltip.querySelectorAll('.metadata-copy-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -1012,16 +934,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         return tooltip;
     }
 
-    /**
-     * Loads metadata for a comparison item.
-     */
     async function loadMetadataForImage(imageContainer, imageUrl) {
-        // Check if metadata is already loaded
         if (imageContainer.querySelector('.metadata-tooltip:not(.metadata-loading-wrapper)')) {
             return;
         }
 
-        // Add loading indicator
         const loadingTooltip = document.createElement('div');
         loadingTooltip.className = 'metadata-tooltip metadata-loading-wrapper';
         loadingTooltip.innerHTML = `
@@ -1032,27 +949,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         imageContainer.appendChild(loadingTooltip);
 
-        // Extract metadata
         const metadata = await extractImageMetadata(imageUrl);
-        
-        // Remove loading indicator
+
         loadingTooltip.remove();
-        
-        // Add actual metadata tooltip
+
         const tooltip = createMetadataTooltip(metadata);
         imageContainer.appendChild(tooltip);
     }
 
-    /**
-     * Compute an optimal grid (cols, rows, cellWidth, cellHeight) for mostly portrait images.
-     * Assumes typical image aspect ratio ~ 1056x1536 (w*h) => ~0.69.
-     * Goal:
-     * - Treat images as tall.
-     * - Keep tiles tall, avoid “fake squares”.
-     * - Use viewport efficiently while keeping them close together.
-     */
     function computeComparisonLayout(count) {
-        const paddingTop = 4.5 * 16;   // match CSS: 4.5rem
+        const paddingTop = 4.5 * 16;
         const paddingBottom = 4.5 * 16;
         const paddingSides = 1.5 * 16;
 
@@ -1068,24 +974,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
         }
 
-        const targetImageAspect = 1056 / 1536; // ~0.6875 (portrait: w/h)
+        const targetImageAspect = 1056 / 1536;
         let best = null;
 
-        // Try all reasonable (cols, rows)
         for (let cols = 1; cols <= count; cols++) {
             const rows = Math.ceil(count / cols);
             if (rows <= 0) continue;
 
-            // Raw cell size
             const cellWidth = viewportWidth / cols;
             const cellHeight = viewportHeight / rows;
 
-            // Effective displayed image aspect within this cell
             const cellAspect = cellWidth / cellHeight;
 
-            // Score:
-            // - Maximize used area.
-            // - Prefer cell aspect close to target portrait (tall cells).
             const area = cellWidth * cellHeight;
             const aspectPenalty = Math.abs(Math.log((cellAspect || 1) / targetImageAspect));
             const score = area / (1 + aspectPenalty * 1.5);
@@ -1103,58 +1003,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    /**
-     * Apply absolute positioning so images behave like "sponges in a box":
-     * - JS decides exact tile rectangles.
-     * - Each image-container is the tile; each img is max-sized inside.
-     * - Uses tight gaps so images visually hug each other.
-     */
     function layoutComparisonItems() {
         const items = Array.from(document.querySelectorAll('.comparison-item'));
         const count = items.length;
         if (count === 0) return;
 
-        // Hard viewport box (respecting your UI chrome)
         const paddingTop = 4.5 * 16;
         const paddingBottom = 4.5 * 16;
         const paddingSides = 1.5 * 16;
-        const gap = 4; // px gap between images, nothing more
+        const gap = 4;
 
         const viewportWidth = window.innerWidth - paddingSides * 2;
         const viewportHeight = window.innerHeight - paddingTop - paddingBottom;
 
         const { cols, rows, cellWidth, cellHeight } = computeComparisonLayout(count);
 
-        // We will treat each tile as a strict portrait box:
-        // - target aspect from your source: 1056x1536 -> 0.6875
         const targetAspect = 1056 / 1536;
 
-        // Effective tile sizes excluding gaps so images sit tight
         const tileWidth = cellWidth - gap;
-        const tileHeight = tileWidth / targetAspect; // force portrait tile by width
+        const tileHeight = tileWidth / targetAspect;
 
-        // If forced tileHeight overflows available height, clamp by height instead
         const maxTotalHeight = viewportHeight;
         const rowsNeededHeight = rows * tileHeight + (rows - 1) * gap;
         let finalTileWidth = tileWidth;
         let finalTileHeight = tileHeight;
 
         if (rowsNeededHeight > maxTotalHeight) {
-            // Constrain by height: recompute tile height so all rows fit;
-            // derive width from target aspect
             finalTileHeight = (maxTotalHeight - (rows - 1) * gap) / rows;
             finalTileWidth = finalTileHeight * targetAspect;
         }
 
-        // Now recompute used size with final tile dimensions
         const usedWidth = cols * finalTileWidth + (cols - 1) * gap;
         const usedHeight = rows * finalTileHeight + (rows - 1) * gap;
 
-        // Center grid inside modal box
         const offsetX = paddingSides + (viewportWidth - usedWidth) / 2;
         const offsetY = paddingTop + (viewportHeight - usedHeight) / 2;
 
-        // comparisonGrid is a fixed canvas controlled ONLY here
         comparisonGrid.style.position = 'fixed';
         comparisonGrid.style.inset = '0';
         comparisonGrid.style.padding = '0';
@@ -1168,7 +1052,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const x = offsetX + col * (finalTileWidth + gap);
             const y = offsetY + row * (finalTileHeight + gap);
 
-            // Strict tile rect
+
             item.style.position = 'absolute';
             item.style.boxSizing = 'border-box';
             item.style.left = `${x}px`;
@@ -1179,7 +1063,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             item.style.padding = '0';
             item.style.display = 'block';
 
-            // Image container EXACTLY equals tile, no flex nonsense
             const container = item.querySelector('.image-container');
             if (container) {
                 container.style.position = 'relative';
@@ -1195,7 +1078,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const img = item.querySelector('img');
             if (img) {
-                // Hard, static size to match the tile. No auto, no 100% both sides.
                 img.style.position = 'absolute';
                 img.style.left = '0';
                 img.style.top = '0';
@@ -1209,7 +1091,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 img.style.display = 'block';
             }
 
-            // Tooltip: pinned to this tile so it cannot drift
             const tooltip = item.querySelector('.metadata-tooltip');
             if (tooltip && container) {
                 tooltip.style.position = 'absolute';
@@ -1249,7 +1130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (imagesLoaded >= imagesToLoad) {
                 isLoadingImages = false;
                 setNavigationEnabled(true);
-                layoutComparisonItems(); // run layout when all current images are ready
+                layoutComparisonItems();
             }
         };
 
@@ -1277,7 +1158,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const skeleton = item.querySelector('.comparison-skeleton-loader');
             const imageContainer = item.querySelector('.image-container');
 
-            // Metadata on-demand for each item (tooltip created once)
+
             item.metadataLoaded = false;
             item.addEventListener('mouseenter', () => {
                 if (!item.metadataLoaded) {
@@ -1306,21 +1187,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 onImageDone();
             };
 
-            // Kick off loading
+
             img.src = imageUrl;
         });
 
         updateGlobalCounter();
         comparisonModal.classList.remove('opacity-0', 'pointer-events-none');
 
-        // Also re-layout on resize while modal is open
+
         const handleResize = () => {
             if (comparisonModal.classList.contains('pointer-events-none')) return;
             layoutComparisonItems();
         };
         window.addEventListener('resize', handleResize, { passive: true });
 
-        // Store so we can remove on close if desired
+
         comparisonModal._resizeHandler = handleResize;
     }
 
@@ -1339,17 +1220,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         globalNextBtn.disabled = globalImageIndex >= maxImagesInQueue - 1;
     }
 
-    // Track current loading index to prevent mixing images from fast navigation
     let currentLoadingIndex = 0;
-    let isLoadingImages = false; // Track if images are currently loading
+    let isLoadingImages = false;
 
-    /**
-     * Disables or enables navigation buttons during image loading
-     */
     function setNavigationEnabled(enabled) {
         const prevButton = document.getElementById('global-prev-btn');
         const nextButton = document.getElementById('global-next-btn');
-        
+
         if (prevButton && nextButton) {
             if (enabled) {
                 prevButton.disabled = globalImageIndex <= 0;
@@ -1369,11 +1246,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    /**
-     * NEW: Updates all images in the comparison grid to a new index.
-     * Enhanced to show skeleton loaders during image transitions and prevent image mixing.
-     * Blocks navigation buttons during loading to prevent race conditions.
-     */
     function updateAllComparisonImages(newIndex) {
         if (newIndex < 0 || newIndex >= maxImagesInQueue || isLoadingImages) {
             return;
@@ -1392,7 +1264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (imagesLoaded >= imagesToLoad) {
                 isLoadingImages = false;
                 setNavigationEnabled(true);
-                layoutComparisonItems(); // keep layout tight after images swap
+                layoutComparisonItems();
             }
         };
 
@@ -1405,7 +1277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 clearTimeout(item.hideSkeletonTimeout);
             }
 
-            // Remove previous tooltip, will be lazy-loaded again
+
             const existingTooltip = imageContainer.querySelector('.metadata-tooltip');
             if (existingTooltip) existingTooltip.remove();
             item.metadataLoaded = false;
@@ -1454,9 +1326,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateGlobalCounter();
     }
 
-    // --- MODIFIED Event Listeners for Comparison Modal ---
     compareButton.addEventListener('click', () => {
-        globalImageIndex = 0; // Explicitly reset for new comparisons
+        globalImageIndex = 0;
         showComparisonView();
     });
     closeComparisonButton.addEventListener('click', hideComparisonView);
@@ -1466,7 +1337,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // NEW event listeners for global navigation
+
     globalNextBtn.addEventListener('click', () => {
         updateAllComparisonImages(globalImageIndex + 1);
     });
@@ -1475,17 +1346,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateAllComparisonImages(globalImageIndex - 1);
     });
 
-    // Share button event listener
+
     const shareComparisonBtn = document.getElementById('share-comparison-btn');
     if (shareComparisonBtn) {
         shareComparisonBtn.addEventListener('click', shareComparison);
     }
 
-    // Keyboard navigation for Comparison Viewer
+
     document.addEventListener('keydown', (e) => {
-        // Only handle keyboard events when comparison modal is visible
+
         const comparisonVisible = !comparisonModal.classList.contains('pointer-events-none');
-        
+
         if (comparisonVisible) {
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
@@ -1504,14 +1375,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // --- Popup Menu & Settings Logic ---
     const menuButton = document.getElementById('menu-button');
     const closeMenuButton = document.getElementById('close-menu-button');
     const menuOverlay = document.getElementById('popup-menu-overlay');
     const popupMenuContainer = menuOverlay.querySelector('div');
     const popupMenu = document.getElementById('popup-menu');
 
-    // Settings View Elements
     const settingsView = document.getElementById('settings-view');
     const settingsButton = document.getElementById('settings-button');
     const backToMenuButton = document.getElementById('back-to-menu-button');
@@ -1521,7 +1390,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dbUrlInput = document.getElementById('db-url-input');
     const settingsError = document.getElementById('settings-error');
 
-    // Create Album View Elements
     const createAlbumView = document.getElementById('create-album-view');
     const createAlbumMenuButton = document.getElementById('create-album-menu-button');
     const backToMenuFromCreateButton = document.getElementById('back-to-menu-from-create-button');
@@ -1713,14 +1581,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 fetchAndDisplayAlbums();
                 saveSettingsButton.disabled = false;
                 saveSettingsButton.textContent = 'Save';
-                
-                // Check if there's a pending shared comparison to load
+
+
                 const pendingShare = sessionStorage.getItem('pendingSharedComparison');
                 if (pendingShare) {
                     sessionStorage.removeItem('pendingSharedComparison');
                     const shareData = JSON.parse(pendingShare);
-                    
-                    // Reconstruct the URL and reload the shared comparison
+
+
                     const shareUrl = `${window.location.origin}${window.location.pathname}?share=${encodeURIComponent(btoa(JSON.stringify(shareData)))}`;
                     window.location.href = shareUrl;
                 }
@@ -1741,7 +1609,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     menuButton.addEventListener('click', openMenu);
     closeMenuButton.addEventListener('click', closeMenu);
 
-    // --- Expandable Album Detail Logic ---
     const detailContainer = document.getElementById('album-detail-container');
     const detailBackdrop = document.getElementById('detail-backdrop');
 
@@ -1811,13 +1678,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     detailBackdrop.addEventListener('click', closeDetailView);
     menuButton.addEventListener('click', closeDetailView);
 
-    // --- Initial Load ---
     if (!API_KEY || !DB_URL) {
         showSettingsOnboarding();
     } else {
         await fetchAndDisplayAlbums();
     }
-    
-    // Load shared comparison if URL parameter exists
+
     await loadSharedComparison();
 });
