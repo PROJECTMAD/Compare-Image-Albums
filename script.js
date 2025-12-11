@@ -868,8 +868,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const fields = [
-            { key: 'user_prompt', label: 'Prompt', isPrompt: true },
             { key: 'user_comment', label: 'Comment' },
+            { key: 'user_prompt', label: 'Prompt', isPrompt: true },
             { key: 'user_loras', label: 'LoRAs' },
             { key: 'user_checkpoint', label: 'Checkpoint' },
             { key: 'user_sampler', label: 'Sampler' },
