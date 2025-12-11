@@ -869,6 +869,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const fields = [
             { key: 'user_prompt', label: 'Prompt', isPrompt: true },
+            { key: 'user_comment', label: 'Comment' },
             { key: 'user_loras', label: 'LoRAs' },
             { key: 'user_checkpoint', label: 'Checkpoint' },
             { key: 'user_sampler', label: 'Sampler' },
@@ -883,7 +884,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         fields.forEach(field => {
             const value = metadata[field.key]?.description;
+
             if (value !== null && value !== undefined) {
+                if (typeof value === 'string' && value.trim().length === 0) {
+                    return;
+                }
+
                 hasData = true;
                 const formattedValue = formatMetadataValue(value, field.key);
                 const rawValue = String(value);
@@ -918,7 +924,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             tooltip.innerHTML = '<div class="metadata-no-data">No metadata available</div>';
         } else {
             tooltip.innerHTML = htmlContent;
-
 
             setTimeout(() => {
                 tooltip.querySelectorAll('.metadata-copy-btn').forEach(btn => {
